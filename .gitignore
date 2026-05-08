@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+artifacts/
+spinefairbench_artifacts.tar.gz
+spinefairbench_artifacts.tar.gz.sha256
