@@ -7,7 +7,7 @@ This repository contains the public verification and scoring code. The released
 artifact bundle is hosted separately:
 
 ```text
-https://huggingface.co/datasets/anon-submission7979/spinefairbench-artifacts
+https://huggingface.co/datasets/ahmedtaha100/spinefairbench-artifacts
 ```
 
 ## Requirements
@@ -40,7 +40,7 @@ Clone the repository, download the artifact bundle into the repository root, and
 verify the tarball checksum:
 
 ```bash
-hf download anon-submission7979/spinefairbench-artifacts \
+hf download ahmedtaha100/spinefairbench-artifacts \
   spinefairbench_artifacts.tar.gz \
   spinefairbench_artifacts.tar.gz.sha256 \
   --repo-type dataset \
@@ -60,8 +60,11 @@ python3 reviewer_verify.py stage1-confidence --artifacts artifacts
 python3 reviewer_verify.py mitigation --artifacts artifacts
 python3 reviewer_verify.py parse-sample --artifacts artifacts --model gpt-5.4
 python3 reviewer_verify.py parse-sample --artifacts artifacts --model llama-4-scout
+python3 reviewer_verify.py diagnostic-scoring
 python3 reviewer_verify.py table2 --artifacts artifacts --model gpt-5.4
 python3 reviewer_verify.py table2 --artifacts artifacts --model qwen2.5-vl
+python3 reviewer_verify.py gap-sensitivity --artifacts artifacts
+python3 reviewer_verify.py both-empty-diagnostic --artifacts artifacts
 python3 reviewer_verify.py radiologist --artifacts artifacts
 ```
 
@@ -89,12 +92,38 @@ for model in gpt-5.4 claude-sonnet-4-6 claude-opus-4-6 glm-4.6v kimi-k2.5 \
 done
 ```
 
-The `table2` command recomputes endpoint point estimates from released retained
-outputs and checks them against the frozen summary. It follows the frozen
-accounting policy: full-refusal pairs are excluded from primary endpoints, and
-partial-refusal pairs are retained. The older `table3` command remains as a
-backward-compatible alias for `table2`; the manuscript mitigation table is
-verified by the `mitigation` command.
+The `diagnostic-scoring` command prints the exact frozen diagnostic-label
+scoring path. Frozen Table 2 uses
+`spinefairbench.metrics.diagnostic_label.extract_labels()` followed by
+`compute_jaccard()` over the released 13-category synonym registry. The
+tokenized diagnosis helper in `spinefairbench.analysis.endpoints` is archival
+analysis code and does not generate the frozen Table 2 diagnostic-label
+consistency values.
+
+The `table2` command recomputes primary endpoint point estimates from released
+retained outputs and checks them against the frozen summary. By default it reads
+the frozen source-clustered 95% CIs from
+`artifacts/Results/analysis/common_core_1000_summary.json`; pass
+`--recompute-ci` to regenerate source-clustered percentile bootstrap CIs from
+the released per-pair outputs. It follows the frozen accounting policy:
+full-refusal pairs are excluded from primary endpoints, and partial-refusal
+pairs are retained. The older `table3` command remains as a backward-compatible
+alias for `table2`; the manuscript mitigation table is verified by the
+`mitigation` command.
+
+`gap-sensitivity` recomputes the stability-gap sensitivity from released
+per-pair outputs. The manuscript headline gap is
+`gap_exact = mean diagnostic-label Jaccard - (1 - exact recommendation change
+rate)`. The matched-granularity sensitivity is
+`gap_graded = mean diagnostic-label Jaccard - mean recommendation-category
+Jaccard`; on the released retained panel this gives median `gap_exact =
+0.261611`, median `gap_graded = -0.113738`, and `gap_graded < 0` for `8/9`
+models.
+
+`both-empty-diagnostic` reports pairs where both reports contain no matched
+released diagnostic labels. The pooled released count is `509/34146 = 1.4907%`;
+those pairs score diagnostic-label Jaccard `1.0` by frozen benchmark
+definition.
 
 `stage1-confidence` uses an explicit released 200-file sample list from the
 artifact bundle. It accepts either the standalone confidence-sample manifest or
@@ -130,7 +159,10 @@ python3 -m spinefairbench.release.scoring score \
 
 The toy submission is a five-pair smoke test. Its expected primary values are
 recommendation change `0.400` with 95% CI `[0.000, 0.500]` and
-diagnostic-label consistency `1.000` with 95% CI `[1.000, 1.000]`.
+diagnostic-label consistency `1.000` with 95% CI `[1.000, 1.000]`. The scorer
+uses source-clustered percentile bootstrap CIs and records the endpoint-specific
+seeds in the score JSON as `recommendation_bootstrap_seed` and
+`diagnostic_bootstrap_seed`.
 
 For a comparable benchmark run, create a full submission with
 `scope: "common-core-1000"` and leave `--allow-partial` unset. The scorer will
@@ -145,6 +177,12 @@ prompt registry and execution roster. The retained public evaluation panels are
 defined by the released panel manifests under
 `artifacts/artifacts/Results/final_inputs/panels/`, including
 `full_pipeline_retained` and `baseline_only_retained`.
+
+Source-count terminology is split explicitly in current release metadata:
+`filtered_source_count = 2987` source studies passed source-side filtering,
+`qc_passed_source_count = 2950` source studies have at least one QC-passed
+released counterfactual, `failed_qc_only_source_count = 37`, and
+`qc_passed_pair_count = 11795`.
 
 The released diagnostic and recommendation parsers are deterministic keyword
 classifiers used to reproduce the frozen endpoint values. They intentionally do
@@ -163,13 +201,27 @@ The frozen Table 2 confidence intervals are read from
 `artifacts/artifacts/Results/analysis/common_core_1000_summary.json`. Those
 intervals were generated with source-clustered percentile bootstrap confidence
 intervals using 10,000 iterations and seed `42`; `reviewer_verify.py table2`
-recomputes point estimates and checks them against that frozen summary.
+recomputes point estimates and checks them against that frozen summary. With
+`--recompute-ci`, the verifier regenerates primary endpoint CIs from released
+per-pair outputs; secondary/exploratory Table 2 fields such as severity,
+confidence, and hallucination are retained in the frozen summary and are not
+fully regenerated by the quickstart verifier.
+
+## Release Scope
+
+This public repository and artifact bundle support benchmark evaluation,
+scoring, checksum validation, primary endpoint recomputation, radiologist
+validation checks, and reviewer-facing sensitivity checks. They do not include
+the counterfactual generator checkpoint, generator training/inference code,
+provider-client orchestration, raw source radiographs, provider credentials, or
+private run roots. Generator configuration and control metadata are released as
+documentation/provenance only.
 
 ## License And Anonymity
 
 The code is released under the MIT license. Documentation and artifact metadata
 are released under the accompanying documentation license where provided.
 
-This repository is prepared for anonymous review. The tracked source tree is not
-intended to contain author names, institutional names, private repository URLs,
-API keys, local machine paths, or raw source radiographs.
+Historical anonymous-review archives may reference the temporary
+`anon-submission7979/spinefairbench-artifacts` handle. Current public quickstart
+commands use `ahmedtaha100/spinefairbench-artifacts`.

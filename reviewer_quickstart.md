@@ -9,7 +9,7 @@ The reviewer verification path uses only the Python standard library. Python
 ## 1. Download And Verify The Artifact Bundle
 
 ```bash
-hf download anon-submission7979/spinefairbench-artifacts \
+hf download ahmedtaha100/spinefairbench-artifacts \
   spinefairbench_artifacts.tar.gz \
   spinefairbench_artifacts.tar.gz.sha256 \
   --repo-type dataset \
@@ -63,6 +63,7 @@ models through `baseline_only_retained`.
 ## 5. Reproduce Endpoint-Summary Rows
 
 ```bash
+python3 reviewer_verify.py diagnostic-scoring
 python3 reviewer_verify.py table2 --artifacts artifacts --model gpt-5.4
 python3 reviewer_verify.py table2 --artifacts artifacts --model qwen2.5-vl
 ```
@@ -98,6 +99,31 @@ frozen source-clustered CI values from
 excludes full-refusal pairs and retains partial-refusal pairs, matching the
 frozen accounting policy. The older `table3` command remains as a
 backward-compatible alias for `table2`.
+
+To regenerate source-clustered primary endpoint CIs from the released per-pair
+outputs, add `--recompute-ci`. The default quickstart mode is faster and labels
+the frozen CIs as read from the frozen summary.
+
+The diagnostic-label path used for frozen Table 2 is
+`extract_labels()` plus `compute_jaccard()` over the released 13-category
+synonym registry. The tokenized diagnosis helper in
+`spinefairbench.analysis.endpoints` is archival analysis code, not the frozen
+Table 2 diagnostic scorer.
+
+## 5a. Run Sensitivity And Parser-Definition Checks
+
+```bash
+python3 reviewer_verify.py gap-sensitivity --artifacts artifacts
+python3 reviewer_verify.py both-empty-diagnostic --artifacts artifacts
+```
+
+Expected summary values:
+
+- `gap-sensitivity`: median `gap_exact = 0.261611`, median `gap_graded =
+  -0.113738`, and `gap_graded < 0` for `8/9` retained models.
+- `both-empty-diagnostic`: pooled both-empty diagnostic-label pairs
+  `509/34146 (1.4907%)`; these score diagnostic-label Jaccard `1.0` by frozen
+  benchmark definition.
 
 ## 6. Check Public Radiologist-Validation Counts
 
@@ -141,7 +167,9 @@ python3 -m spinefairbench.release.scoring score \
 Expected primary values are recommendation change `0.400` with 95% CI
 `[0.000, 0.500]` and diagnostic-label consistency `1.000` with 95% CI
 `[1.000, 1.000]`. The toy score is a smoke test, not a benchmark-comparable
-result.
+result. The score JSON records both `recommendation_bootstrap_seed` and
+`diagnostic_bootstrap_seed`; current scoring uses the requested `--seed` for
+both primary endpoint CIs.
 
 For a comparable new-model run, fill the submission template with all pair IDs
 for `scope: "common-core-1000"`. Leave `--allow-partial` unset; missing pairs
@@ -159,3 +187,9 @@ percentile bootstrap confidence intervals using 10,000 iterations and seed
 `42`. The new-submission scorer uses
 `spinefairbench.release.scoring.source_clustered_bootstrap_ci`; archival
 analysis helpers delegate to the same implementation where applicable.
+
+The public release supports artifact-level benchmark verification and scoring.
+It does not include the generator checkpoint, generator training/inference
+code, provider-client orchestration, raw source radiographs, provider
+credentials, or private run roots. Generator metadata and control registrations
+are release provenance, not executable regeneration code.

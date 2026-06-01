@@ -430,7 +430,7 @@ def _condition_summary(
         "rec_change_ci": list(_clustered_mean_ci(rec, clusters, n_iter=n_iter, seed=seed)),
         "diag_consistency": float(np.mean(diag)) if len(diag) else 0.0,
         "diag_consistency_ci": list(
-            _clustered_mean_ci(diag, clusters, n_iter=n_iter, seed=seed + 1)
+            _clustered_mean_ci(diag, clusters, n_iter=n_iter, seed=seed)
         ),
         "n_pairs": int(len(metrics)),
         "full_refusals": int(counts.get("full_refusal", 0)),
