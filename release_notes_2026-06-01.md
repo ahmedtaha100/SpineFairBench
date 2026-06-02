@@ -6,8 +6,7 @@ manuscript or recompute scientific endpoint summaries.
 
 ## Corrections
 
-- Current public artifact URL is `ahmedtaha100/spinefairbench-artifacts`.
-  Historical anonymous-review archives may still mention
+- Current reviewer artifact URL is
   `anon-submission7979/spinefairbench-artifacts`.
 - Repository and artifact metadata now distinguish `filtered_source_count =
   2987`, `qc_passed_source_count = 2950`, `failed_qc_only_source_count = 37`,

@@ -3,18 +3,18 @@
 Reviewer-facing code for SpineFairBench, a counterfactual benchmark for auditing
 demographic sensitivity in vision-language spine-radiology reports.
 
-This repository contains the public verification and scoring code. The released
-artifact bundle is hosted separately:
+This repository contains the reviewer-facing verification and scoring code. The
+anonymous reviewer artifact bundle is hosted separately:
 
 ```text
-https://huggingface.co/datasets/ahmedtaha100/spinefairbench-artifacts
+https://huggingface.co/datasets/anon-submission7979/spinefairbench-artifacts
 ```
 
 ## Requirements
 
 - Python 3.11 or newer.
 - The reviewer verification path is standard-library only.
-- The Hugging Face `hf` CLI is used only to download the public artifact bundle.
+- The Hugging Face `hf` CLI is used only to download the reviewer artifact bundle.
 - `requirements-analysis.txt` lists optional packages for archival analysis
   helpers that are not needed for the reviewer reproduction path.
 
@@ -41,7 +41,7 @@ Clone the repository, download the artifact bundle into the repository root, and
 verify the tarball checksum:
 
 ```bash
-hf download ahmedtaha100/spinefairbench-artifacts \
+hf download anon-submission7979/spinefairbench-artifacts \
   spinefairbench_artifacts.tar.gz \
   spinefairbench_artifacts.tar.gz.sha256 \
   --repo-type dataset \
@@ -297,6 +297,5 @@ documentation/provenance only.
 The code is released under the MIT license. Documentation and artifact metadata
 are released under the accompanying documentation license where provided.
 
-Historical anonymous-review archives may reference the temporary
-`anon-submission7979/spinefairbench-artifacts` handle. Current public quickstart
-commands use `ahmedtaha100/spinefairbench-artifacts`.
+Current reviewer quickstart commands use the anonymous artifact handle
+`anon-submission7979/spinefairbench-artifacts`.
