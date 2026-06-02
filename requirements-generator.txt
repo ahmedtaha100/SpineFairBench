@@ -1,0 +1,12 @@
+diffusers>=0.29
+numpy>=1.24
+peft>=0.11
+Pillow>=10
+PyYAML>=6
+safetensors>=0.4
+torch>=2.2
+transformers>=4.41
+
+# Optional, only for full QC parity checks:
+lpips>=0.1.4
+opencv-python>=4.8

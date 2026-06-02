@@ -188,8 +188,50 @@ percentile bootstrap confidence intervals using 10,000 iterations and seed
 `spinefairbench.release.scoring.source_clustered_bootstrap_ci`; archival
 analysis helpers delegate to the same implementation where applicable.
 
-The public release supports artifact-level benchmark verification and scoring.
-It does not include the generator checkpoint, generator training/inference
-code, provider-client orchestration, raw source radiographs, provider
-credentials, or private run roots. Generator metadata and control registrations
-are release provenance, not executable regeneration code.
+## 10. Optional Counterfactual Generator Inspection
+
+The standard reviewer verification path above remains standard-library only.
+The optional generator release is for methodology inspection and separately
+governed regeneration attempts; it is not needed to reproduce frozen benchmark
+scores.
+
+Released in git:
+
+- generator inference adapter and config templates under
+  `spinefairbench/generator/`;
+- locked demographic prompt templates;
+- mask-blending and QC utilities;
+- dry-run scripts under `scripts/`.
+
+Not released:
+
+- raw VinDr-SpineXR or BUU-LSPINE source radiographs;
+- generator checkpoint/LoRA weights;
+- runnable training code or raw training data;
+- provider credentials, provider logs, private run roots, or local paths.
+
+Run the generator dry-run checks without heavy dependencies:
+
+```bash
+python3 scripts/verify_generator_release.py --dry-run
+python3 scripts/run_generator_smoke_test.py --dry-run --output /tmp/spinefairbench_generator_smoke
+```
+
+For real inference, install optional dependencies with
+`python3 -m pip install -r requirements-generator.txt`, then provide your own
+source image and local authorized LoRA checkpoint:
+
+```bash
+python3 -m spinefairbench.generator.infer \
+  --input /path/to/user_supplied_source.png \
+  --output /tmp/spinefairbench_generator \
+  --checkpoint /path/to/local_lora.safetensors \
+  --config spinefairbench/generator/configs/inference_sd15_lora.yaml \
+  --demographic elderly_female \
+  --seed 42 \
+  --device cuda
+```
+
+The released HF counterfactual images remain the fixed benchmark images.
+Generator execution is not required for benchmark scoring, and exact
+regeneration may require unreleased or independently obtained components.

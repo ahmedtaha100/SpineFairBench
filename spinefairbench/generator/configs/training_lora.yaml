@@ -1,0 +1,18 @@
+# Provenance/template only. The public repository does not release a runnable
+# training pipeline or raw training radiographs.
+base_model: runwayml/stable-diffusion-v1-5
+lora_rank: 64
+lora_alpha: 128
+train_radiograph_count: 9024
+hardware: single H200
+losses:
+  reconstruction_l1_weight: 1.0
+  patchgan_adversarial_weight: 0.005
+  kl_weight: 1.0e-7
+  stage2_latent_cycle_l1_weight: 1.0
+upstream_data:
+  vindr_spinexr: user must obtain under original terms
+  buu_lspine: user must obtain under original terms
+released_training_code: false
+released_training_radiographs: false
+released_checkpoint: false
