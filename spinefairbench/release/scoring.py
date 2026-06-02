@@ -402,7 +402,7 @@ def score_submission_payload(
         diag_values,
         source_ids,
         iterations=bootstrap_iterations,
-        seed=seed + 1,
+        seed=seed,
     )
     model = validated["model"]
     warnings: list[str] = []
@@ -420,6 +420,8 @@ def score_submission_payload(
             "bootstrap": "source_clustered_percentile",
             "bootstrap_iterations": bootstrap_iterations,
             "bootstrap_seed": seed,
+            "recommendation_bootstrap_seed": seed,
+            "diagnostic_bootstrap_seed": seed,
             "full_refusal_policy": "exclude pair from primary endpoints",
             "partial_refusal_policy": "include pair in primary endpoints",
         },

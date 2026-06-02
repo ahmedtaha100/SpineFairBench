@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import re
+import statistics
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,9 +14,22 @@ DEFAULT_ARTIFACT_ROOT = CODE_ROOT.parent / "artifacts"
 if str(CODE_ROOT) not in sys.path:
     sys.path.insert(0, str(CODE_ROOT))
 
-from spinefairbench.metrics.diagnostic_label import compute_jaccard, extract_labels
+from spinefairbench.metrics.diagnostic_label import PATHOLOGY_SYNONYMS, compute_jaccard, extract_labels
 from spinefairbench.metrics.recommendation import classify_recommendations
 from spinefairbench.metrics.refusal_detector import ResponseClass, classify_response
+from spinefairbench.release.scoring import source_clustered_bootstrap_ci
+
+RETAINED_TABLE2_MODELS = (
+    "gpt-5.4",
+    "claude-sonnet-4-6",
+    "claude-opus-4-6",
+    "glm-4.6v",
+    "kimi-k2.5",
+    "gemma-4",
+    "llama-4-scout",
+    "qwen2.5-vl",
+    "radfm",
+)
 
 
 def _load_json(path: Path) -> Any:
@@ -214,6 +228,75 @@ def _is_usable_endpoint_pair(source_report: str, generated_report: str) -> bool:
     )
 
 
+def _set_jaccard(values_a: set[str], values_b: set[str]) -> float:
+    if not values_a and not values_b:
+        return 1.0
+    union = values_a | values_b
+    return len(values_a & values_b) / len(union)
+
+
+def _source_id_for_record(src: dict[str, Any], gen: dict[str, Any]) -> str:
+    for row in (gen, src):
+        value = row.get("pair_source_id") or row.get("source_id")
+        if isinstance(value, str) and value:
+            return value
+    pair_id = str(gen.get("pair_id") or src.get("pair_id") or "")
+    return pair_id.split("__", 1)[0] if "__" in pair_id else pair_id
+
+
+def _endpoint_metrics(root: Path, model: str) -> dict[str, Any]:
+    sources, generated = _paired_records(root, model)
+    recommendation_matches: list[bool] = []
+    recommendation_changed: list[float] = []
+    recommendation_jaccards: list[float] = []
+    diagnostic_jaccards: list[float] = []
+    source_ids: list[str] = []
+    both_empty_diagnostic = 0
+    full_refusal_pairs = 0
+    partial_refusal_pairs = 0
+
+    for gen in generated:
+        src = sources.get(gen["pair_id"])
+        if not src:
+            continue
+        source_report = src.get("response", "")
+        generated_report = gen.get("response", "")
+        source_class, generated_class = _pair_refusal_classes(source_report, generated_report)
+        if source_class == ResponseClass.FULL_REFUSAL or generated_class == ResponseClass.FULL_REFUSAL:
+            full_refusal_pairs += 1
+            continue
+        if source_class == ResponseClass.PARTIAL_REFUSAL or generated_class == ResponseClass.PARTIAL_REFUSAL:
+            partial_refusal_pairs += 1
+
+        source_recs = classify_recommendations(source_report)
+        generated_recs = classify_recommendations(generated_report)
+        rec_match = source_recs == generated_recs
+        recommendation_matches.append(rec_match)
+        recommendation_changed.append(float(not rec_match))
+        recommendation_jaccards.append(_set_jaccard(source_recs, generated_recs))
+
+        source_labels = extract_labels(source_report)
+        generated_labels = extract_labels(generated_report)
+        if not source_labels and not generated_labels:
+            both_empty_diagnostic += 1
+        diagnostic_jaccards.append(compute_jaccard(source_labels, generated_labels))
+        source_ids.append(_source_id_for_record(src, gen))
+
+    if not recommendation_matches:
+        raise SystemExit(f"No usable pairs found for model {model}")
+
+    return {
+        "recommendation_matches": recommendation_matches,
+        "recommendation_changed": recommendation_changed,
+        "recommendation_jaccards": recommendation_jaccards,
+        "diagnostic_jaccards": diagnostic_jaccards,
+        "source_ids": source_ids,
+        "both_empty_diagnostic": both_empty_diagnostic,
+        "full_refusal_pairs": full_refusal_pairs,
+        "partial_refusal_pairs": partial_refusal_pairs,
+    }
+
+
 def command_parse_sample(args: argparse.Namespace) -> None:
     root = _artifact_root(args)
     sources, generated = _paired_records(root, args.model)
@@ -241,37 +324,9 @@ def command_parse_sample(args: argparse.Namespace) -> None:
 
 def command_table2(args: argparse.Namespace) -> None:
     root = _artifact_root(args)
-    sources, generated = _paired_records(root, args.model)
-    recommendation_matches: list[bool] = []
-    diagnostic_jaccards: list[float] = []
-    full_refusal_pairs = 0
-    partial_refusal_pairs = 0
-
-    for gen in generated:
-        src = sources.get(gen["pair_id"])
-        if not src:
-            continue
-        source_report = src.get("response", "")
-        generated_report = gen.get("response", "")
-        source_class, generated_class = _pair_refusal_classes(source_report, generated_report)
-        if source_class == ResponseClass.FULL_REFUSAL or generated_class == ResponseClass.FULL_REFUSAL:
-            full_refusal_pairs += 1
-            continue
-        if source_class == ResponseClass.PARTIAL_REFUSAL or generated_class == ResponseClass.PARTIAL_REFUSAL:
-            partial_refusal_pairs += 1
-        recommendation_matches.append(
-            classify_recommendations(source_report)
-            == classify_recommendations(generated_report)
-        )
-        diagnostic_jaccards.append(
-            compute_jaccard(
-                extract_labels(source_report),
-                extract_labels(generated_report),
-            )
-        )
-
-    if not recommendation_matches:
-        raise SystemExit(f"No usable pairs found for model {args.model}")
+    metrics = _endpoint_metrics(root, args.model)
+    recommendation_matches = metrics["recommendation_matches"]
+    diagnostic_jaccards = metrics["diagnostic_jaccards"]
 
     agreement = sum(recommendation_matches) / len(recommendation_matches)
     rec_change = 1.0 - agreement
@@ -291,28 +346,124 @@ def command_table2(args: argparse.Namespace) -> None:
 
     print("Model:", args.model)
     print("Usable pairs:", len(recommendation_matches))
-    print("Full-refusal pairs excluded:", full_refusal_pairs)
-    print("Partial-refusal pairs included:", partial_refusal_pairs)
+    print("Full-refusal pairs excluded:", metrics["full_refusal_pairs"])
+    print("Partial-refusal pairs included:", metrics["partial_refusal_pairs"])
     if "pair_usable" in frozen_quality:
         print("Frozen summary usable pairs:", frozen_quality["pair_usable"])
     print("Recomputed recommendation change:", f"{rec_change:.6f}", f"(rounded: {rec_change:.3f})")
     print("Frozen summary recommendation change:", f"{frozen_rec_change:.6f}", f"(rounded: {frozen_rec_change:.3f})")
     print(
-        "Frozen summary recommendation change 95% CI:",
+        "Frozen summary recommendation change 95% CI (read, not recomputed):",
         f"[{rec_change_ci[0]:.3f}, {rec_change_ci[1]:.3f}]",
     )
     print("Recomputed diagnostic consistency:", f"{diag_consistency:.6f}", f"(rounded: {diag_consistency:.3f})")
     print("Frozen summary diagnostic consistency:", f"{frozen_diag:.6f}", f"(rounded: {frozen_diag:.3f})")
     print(
-        "Frozen summary diagnostic consistency 95% CI:",
+        "Frozen summary diagnostic consistency 95% CI (read, not recomputed):",
         f"[{diag_ci['lower']:.3f}, {diag_ci['upper']:.3f}]",
     )
+    if args.recompute_ci:
+        recomputed_rec_ci = source_clustered_bootstrap_ci(
+            metrics["recommendation_changed"],
+            metrics["source_ids"],
+            iterations=args.bootstrap_iterations,
+            seed=args.seed,
+        )
+        recomputed_diag_ci = source_clustered_bootstrap_ci(
+            metrics["diagnostic_jaccards"],
+            metrics["source_ids"],
+            iterations=args.bootstrap_iterations,
+            seed=args.seed,
+        )
+        print(
+            "Recomputed recommendation change 95% CI:",
+            f"[{recomputed_rec_ci[0]:.3f}, {recomputed_rec_ci[1]:.3f}]",
+        )
+        print(
+            "Recomputed diagnostic consistency 95% CI:",
+            f"[{recomputed_diag_ci[0]:.3f}, {recomputed_diag_ci[1]:.3f}]",
+        )
+        print(
+            "CI recomputation settings:",
+            f"source_clustered_percentile iterations={args.bootstrap_iterations} seed={args.seed}",
+        )
+    else:
+        print("CI mode: frozen summary read; pass --recompute-ci to run source-clustered bootstrap.")
     if "pair_usable" in frozen_quality and len(recommendation_matches) != int(frozen_quality["pair_usable"]):
         raise SystemExit("Recomputed usable-pair count does not match frozen summary")
     if abs(rec_change - frozen_rec_change) > 1e-12:
         raise SystemExit("Recomputed recommendation change does not match frozen summary")
     if abs(diag_consistency - frozen_diag) > 1e-12:
         raise SystemExit("Recomputed diagnostic consistency does not match frozen summary")
+
+
+def command_diagnostic_scoring(args: argparse.Namespace) -> None:
+    print("Frozen Table 2 diagnostic scoring path:")
+    print("  spinefairbench.metrics.diagnostic_label.extract_labels()")
+    print("  spinefairbench.metrics.diagnostic_label.compute_jaccard()")
+    print("Released diagnostic-label registry size:", len(PATHOLOGY_SYNONYMS))
+    print("Released diagnostic-label categories:", ", ".join(sorted(PATHOLOGY_SYNONYMS)))
+    print("Both-empty diagnostic-label Jaccard:", f"{compute_jaccard(set(), set()):.1f}")
+    print(
+        "Archival tokenized helper:",
+        "spinefairbench.analysis.endpoints._extract_diagnosis_tokens is not used for frozen Table 2.",
+    )
+
+
+def command_gap_sensitivity(args: argparse.Namespace) -> None:
+    root = _artifact_root(args)
+    models = [args.model] if args.model else list(RETAINED_TABLE2_MODELS)
+    gap_exact_values: list[float] = []
+    gap_graded_values: list[float] = []
+
+    print("model,usable_pairs,rec_change,rec_exact_stability,rec_jaccard,diag_jaccard,gap_exact,gap_graded")
+    for model in models:
+        metrics = _endpoint_metrics(root, model)
+        usable = len(metrics["recommendation_changed"])
+        rec_change = sum(metrics["recommendation_changed"]) / usable
+        rec_exact_stability = 1.0 - rec_change
+        rec_jaccard = sum(metrics["recommendation_jaccards"]) / usable
+        diag_jaccard = sum(metrics["diagnostic_jaccards"]) / usable
+        gap_exact = diag_jaccard - rec_exact_stability
+        gap_graded = diag_jaccard - rec_jaccard
+        gap_exact_values.append(gap_exact)
+        gap_graded_values.append(gap_graded)
+        print(
+            ",".join(
+                [
+                    model,
+                    str(usable),
+                    f"{rec_change:.6f}",
+                    f"{rec_exact_stability:.6f}",
+                    f"{rec_jaccard:.6f}",
+                    f"{diag_jaccard:.6f}",
+                    f"{gap_exact:.6f}",
+                    f"{gap_graded:.6f}",
+                ]
+            )
+        )
+
+    print("median_gap_exact:", f"{statistics.median(gap_exact_values):.6f}")
+    print("median_gap_graded:", f"{statistics.median(gap_graded_values):.6f}")
+    print("gap_graded_negative_models:", f"{sum(value < 0 for value in gap_graded_values)}/{len(gap_graded_values)}")
+
+
+def command_both_empty_diagnostic(args: argparse.Namespace) -> None:
+    root = _artifact_root(args)
+    models = [args.model] if args.model else list(RETAINED_TABLE2_MODELS)
+    pooled_empty = 0
+    pooled_usable = 0
+
+    print("model,usable_pairs,both_empty_diagnostic_label_pairs,rate")
+    for model in models:
+        metrics = _endpoint_metrics(root, model)
+        usable = len(metrics["diagnostic_jaccards"])
+        both_empty = int(metrics["both_empty_diagnostic"])
+        pooled_empty += both_empty
+        pooled_usable += usable
+        print(model, usable, both_empty, f"{both_empty / usable:.4%}", sep=",")
+
+    print("pooled_both_empty:", f"{pooled_empty}/{pooled_usable}", f"({pooled_empty / pooled_usable:.4%})")
 
 
 def command_radiologist(args: argparse.Namespace) -> None:
@@ -577,12 +728,31 @@ def main() -> int:
     table2 = sub.add_parser("table2")
     _add_artifact_arg(table2)
     table2.add_argument("--model", default="gpt-5.4")
+    table2.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
+    table2.add_argument("--bootstrap-iterations", type=int, default=10000)
+    table2.add_argument("--seed", type=int, default=42)
     table2.set_defaults(func=command_table2)
 
     table3 = sub.add_parser("table3", help="Backward-compatible alias for table2.")
     _add_artifact_arg(table3)
     table3.add_argument("--model", default="gpt-5.4")
+    table3.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
+    table3.add_argument("--bootstrap-iterations", type=int, default=10000)
+    table3.add_argument("--seed", type=int, default=42)
     table3.set_defaults(func=command_table2)
+
+    diagnostic = sub.add_parser("diagnostic-scoring", help="Print the frozen Table 2 diagnostic-label scoring path.")
+    diagnostic.set_defaults(func=command_diagnostic_scoring)
+
+    gap = sub.add_parser("gap-sensitivity", help="Recompute exact-vs-graded stability-gap sensitivity from released outputs.")
+    _add_artifact_arg(gap)
+    gap.add_argument("--model", default=None, choices=RETAINED_TABLE2_MODELS)
+    gap.set_defaults(func=command_gap_sensitivity)
+
+    empty = sub.add_parser("both-empty-diagnostic", help="Count usable pairs where both reports have no released diagnostic labels.")
+    _add_artifact_arg(empty)
+    empty.add_argument("--model", default=None, choices=RETAINED_TABLE2_MODELS)
+    empty.set_defaults(func=command_both_empty_diagnostic)
 
     radiologist = sub.add_parser("radiologist")
     _add_artifact_arg(radiologist)
