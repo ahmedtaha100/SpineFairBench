@@ -9,7 +9,7 @@ The reviewer verification path uses only the Python standard library. Python
 ## 1. Download And Verify The Artifact Bundle
 
 ```bash
-hf download ahmedtaha100/spinefairbench-artifacts \
+hf download anon-submission7979/spinefairbench-artifacts \
   spinefairbench_artifacts.tar.gz \
   spinefairbench_artifacts.tar.gz.sha256 \
   --repo-type dataset \
