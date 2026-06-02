@@ -30,9 +30,10 @@ manuscript or recompute scientific endpoint summaries.
 - New-submission scoring now uses the requested bootstrap seed for both
   recommendation-change and diagnostic-label-consistency CIs and records
   endpoint-specific seed fields in score JSON.
-- Public release-scope docs explicitly state that the generator checkpoint,
-  generator training/inference code, provider-client orchestration, raw source
-  radiographs, provider credentials, and private run roots are not released.
+- Public release-scope docs explicitly state the 2026-06-01 benchmark-only
+  release boundary: the generator checkpoint, generator execution materials,
+  provider-client orchestration, raw source radiographs, provider credentials,
+  and private run roots were not released in that pass.
 - Verifier docs now state that secondary/exploratory Table 2 fields such as
   severity, confidence, and hallucination remain frozen-summary fields unless a
   dedicated regeneration command is added later.
@@ -41,3 +42,11 @@ manuscript or recompute scientific endpoint summaries.
 
 Run the reviewer quickstart after downloading the companion artifacts. The
 final release pass regenerated repository checksums after all source edits.
+
+## Follow-Up
+
+The 2026-06-02 release adds optional reviewer-facing counterfactual generator
+inference/config documentation and dry-run smoke tests. The benchmark reviewer
+path remains standard-library only, and the generator checkpoint, raw source
+radiographs, runnable training code, credentials, and private run roots remain
+unreleased.

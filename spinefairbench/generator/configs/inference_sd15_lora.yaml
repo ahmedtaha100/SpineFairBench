@@ -1,0 +1,11 @@
+base_model: runwayml/stable-diffusion-v1-5
+lora_rank: 64
+lora_alpha: 128
+inference_steps: 50
+guidance_scale: 5.0
+strength: 0.15
+seed: 42
+image_size: 512
+tsxr_mask_blend: 0.7
+checkpoint_path:
+device: auto
