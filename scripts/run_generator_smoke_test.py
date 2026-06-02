@@ -68,7 +68,9 @@ def main() -> None:
             "config": GeneratorConfig(seed=args.seed, device=args.device).to_dict(),
             "prompts": DEMOGRAPHIC_PROMPTS,
             "checkpoint_required_for_real_inference": True,
-            "checkpoint_released": False,
+            "checkpoint_released": True,
+            "checkpoint_repo": "anon-submission7979/spinefairbench-generator",
+            "recommended_checkpoint": "spinefairbench_sd15_lora.safetensors",
             "raw_source_radiographs_released": False,
             "note": "Synthetic dry run only; no Stable Diffusion inference executed.",
         }

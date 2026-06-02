@@ -206,9 +206,28 @@ Released in git:
 Not released:
 
 - raw VinDr-SpineXR or BUU-LSPINE source radiographs;
-- generator checkpoint/LoRA weights;
+- source masks;
 - runnable training code or raw training data;
 - provider credentials, provider logs, private run roots, or local paths.
+
+Recommended generator checkpoint inspection assets are hosted separately at
+`anon-submission7979/spinefairbench-generator`:
+
+```bash
+hf download anon-submission7979/spinefairbench-generator \
+  spinefairbench_sd15_lora.safetensors \
+  generator_config.yaml \
+  SHA256SUMS.txt \
+  --repo-type model \
+  --local-dir generator_assets
+cd generator_assets
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+The LoRA-only `spinefairbench_sd15_lora.safetensors` file is the recommended
+checkpoint for reviewer inference inspection. The same HF model repo includes
+`latest.pt` as an optional archival PyTorch training checkpoint; it contains
+training state and is not the recommended inference artifact.
 
 Run the generator dry-run checks without heavy dependencies:
 
@@ -219,7 +238,8 @@ python3 scripts/run_generator_smoke_test.py --dry-run --output /tmp/spinefairben
 
 For real inference, install optional dependencies with
 `python3 -m pip install -r requirements-generator.txt`, then provide your own
-source image and local authorized LoRA checkpoint:
+source image and a local LoRA checkpoint such as the recommended safetensors
+download above:
 
 ```bash
 python3 -m spinefairbench.generator.infer \
