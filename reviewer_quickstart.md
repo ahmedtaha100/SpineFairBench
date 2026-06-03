@@ -106,7 +106,8 @@ the frozen CIs as read from the frozen summary.
 
 The diagnostic-label path used for frozen Table 2 is
 `extract_labels()` plus `compute_jaccard()` over the released 13-category
-synonym registry. The tokenized diagnosis helper in
+synonym registry. Frozen Table 2 diagnostic-label consistency is registry-label
+Jaccard, not free-token Jaccard. The tokenized diagnosis helper in
 `spinefairbench.analysis.endpoints` is archival analysis code, not the frozen
 Table 2 diagnostic scorer.
 
@@ -217,17 +218,19 @@ Recommended generator checkpoint inspection assets are hosted separately at
 hf download anon-submission7979/spinefairbench-generator \
   spinefairbench_sd15_lora.safetensors \
   generator_config.yaml \
-  SHA256SUMS.txt \
+  SHA256SUMS.recommended.txt \
   --repo-type model \
   --local-dir generator_assets
 cd generator_assets
-shasum -a 256 -c SHA256SUMS.txt
+shasum -a 256 -c SHA256SUMS.recommended.txt
 ```
 
 The LoRA-only `spinefairbench_sd15_lora.safetensors` file is the recommended
 checkpoint for reviewer inference inspection. The same HF model repo includes
 `latest.pt` as an optional archival PyTorch training checkpoint; it contains
-training state and is not the recommended inference artifact.
+training state and is not the recommended inference artifact. To verify all
+generator files, including `latest.pt`, download the full model repository and
+run `shasum -a 256 -c SHA256SUMS.txt`.
 
 Run the generator dry-run checks without heavy dependencies:
 
@@ -254,4 +257,6 @@ python3 -m spinefairbench.generator.infer \
 
 The released HF counterfactual images remain the fixed benchmark images.
 Generator execution is not required for benchmark scoring, and exact
-regeneration may require unreleased or independently obtained components.
+regeneration may require the original upstream radiographs, source masks,
+original dependency/GPU/runtime details, and/or the archival `latest.pt`
+training checkpoint.

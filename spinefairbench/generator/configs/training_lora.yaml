@@ -15,4 +15,8 @@ upstream_data:
   buu_lspine: user must obtain under original terms
 released_training_code: false
 released_training_radiographs: false
-released_checkpoint: false
+recommended_lora_checkpoint_released: true
+archival_training_checkpoint_released: true
+checkpoint_release_repo: anon-submission7979/spinefairbench-generator
+recommended_lora_checkpoint: spinefairbench_sd15_lora.safetensors
+archival_training_checkpoint: latest.pt

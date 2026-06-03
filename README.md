@@ -10,6 +10,12 @@ anonymous reviewer artifact bundle is hosted separately:
 https://huggingface.co/datasets/anon-submission7979/spinefairbench-artifacts
 ```
 
+The de-anonymized public mirror is
+`https://huggingface.co/datasets/ahmedtaha100/spinefairbench-artifacts`. The
+anonymous and public HF repositories are separately checksummed release builds;
+use the repository named by your review/manuscript context and verify the
+tarball against the `.sha256` file downloaded from the same HF repository.
+
 ## Requirements
 
 - Python 3.11 or newer.
@@ -97,9 +103,10 @@ The `diagnostic-scoring` command prints the exact frozen diagnostic-label
 scoring path. Frozen Table 2 uses
 `spinefairbench.metrics.diagnostic_label.extract_labels()` followed by
 `compute_jaccard()` over the released 13-category synonym registry. The
-tokenized diagnosis helper in `spinefairbench.analysis.endpoints` is archival
-analysis code and does not generate the frozen Table 2 diagnostic-label
-consistency values.
+frozen Table 2 diagnostic-label consistency is registry-label Jaccard, not
+free-token Jaccard. The tokenized diagnosis helper in
+`spinefairbench.analysis.endpoints` is archival analysis code and does not
+generate the frozen Table 2 diagnostic-label consistency values.
 
 The `table2` command recomputes primary endpoint point estimates from released
 retained outputs and checks them against the frozen summary. By default it reads
@@ -153,10 +160,10 @@ Released in git:
 
 - SD v1.5 img2img inference adapter with optional local LoRA loading.
 - Locked demographic prompt templates:
-  - `75-year-old female lumbar spine radiograph`
-  - `75-year-old male lumbar spine radiograph`
-  - `25-year-old female lumbar spine radiograph`
-  - `25-year-old male lumbar spine radiograph`
+  - `Lumbar spine X-ray of a 75-year-old female patient`
+  - `Lumbar spine X-ray of a 75-year-old male patient`
+  - `Lumbar spine X-ray of a 25-year-old female patient`
+  - `Lumbar spine X-ray of a 25-year-old male patient`
 - Inference/config defaults matching the release documentation: 50 steps,
   guidance scale 5.0, strength 0.15, seed 42, LoRA rank 64 / alpha 128
   metadata, and TSXR mask blend 0.7 toward the source in masked spine regions.
@@ -199,17 +206,18 @@ anonymous HF model repo:
 hf download anon-submission7979/spinefairbench-generator \
   spinefairbench_sd15_lora.safetensors \
   generator_config.yaml \
-  SHA256SUMS.txt \
+  SHA256SUMS.recommended.txt \
   --repo-type model \
   --local-dir generator_assets
 cd generator_assets
-shasum -a 256 -c SHA256SUMS.txt
+shasum -a 256 -c SHA256SUMS.recommended.txt
 ```
 
 The same repo includes `latest.pt` as an optional archival PyTorch training
 checkpoint. Use `spinefairbench_sd15_lora.safetensors` for reviewer inference
 inspection; `latest.pt` contains training state and is not the recommended
-inference artifact.
+inference artifact. To verify all generator files, including `latest.pt`,
+download the full model repository and run `shasum -a 256 -c SHA256SUMS.txt`.
 
 Real inference requires a user-supplied source image and an independently
 authorized local Diffusers-compatible LoRA checkpoint:
@@ -228,8 +236,9 @@ python3 -m spinefairbench.generator.infer \
 The released counterfactual images in the HF artifact bundle are already fixed
 for benchmark evaluation. Running the generator is for methodological
 inspection or independently governed regeneration attempts. Exact reproduction
-may require the original upstream radiographs, the production checkpoint,
-matching dependency versions, GPU/runtime details, and source masks.
+may require the original upstream radiographs, source masks, original
+dependency/GPU/runtime details, and/or the archival `latest.pt` training
+checkpoint.
 
 Generated images are research/evaluation artifacts only. They are not clinical
 images and should not be used for diagnosis or clinical-system training without

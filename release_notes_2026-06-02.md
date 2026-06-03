@@ -16,6 +16,8 @@ documentation without changing the frozen benchmark artifacts or manuscript.
 - Recommended LoRA-only checkpoint:
   `spinefairbench_sd15_lora.safetensors`, SHA256
   `21bbfa4ee50ff389c3a49edc9fa39f4e1f7c691fad85c34cbcce595f62b8d56c`.
+- Recommended-checkpoint checksum manifest:
+  `SHA256SUMS.recommended.txt`.
 - Optional archival PyTorch training checkpoint:
   `latest.pt`, SHA256
   `bc3f71631f07f3d0ca645808b0622f28da2c863b21622cab0ed65e8e44f329ff`.
@@ -32,3 +34,6 @@ documentation without changing the frozen benchmark artifacts or manuscript.
 
 The benchmark reviewer verification path remains standard-library only.
 Generator execution is optional and not required for endpoint verification.
+Use `SHA256SUMS.recommended.txt` after downloading the LoRA-only reviewer
+inspection assets; use `SHA256SUMS.txt` only after downloading the full
+generator repository including the optional archival `latest.pt`.

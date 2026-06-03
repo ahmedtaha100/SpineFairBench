@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 DEMOGRAPHIC_PROMPTS: dict[str, str] = {
-    "elderly_female": "75-year-old female lumbar spine radiograph",
-    "elderly_male": "75-year-old male lumbar spine radiograph",
-    "young_female": "25-year-old female lumbar spine radiograph",
-    "young_male": "25-year-old male lumbar spine radiograph",
+    "elderly_female": "Lumbar spine X-ray of a 75-year-old female patient",
+    "elderly_male": "Lumbar spine X-ray of a 75-year-old male patient",
+    "young_female": "Lumbar spine X-ray of a 25-year-old female patient",
+    "young_male": "Lumbar spine X-ray of a 25-year-old male patient",
 }
 
 

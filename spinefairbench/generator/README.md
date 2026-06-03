@@ -5,16 +5,17 @@ templates, mask-blending utilities, QC utilities, and smoke-test scripts.
 
 It does not include raw VinDr-SpineXR or BUU-LSPINE radiographs, provider
 credentials, private run roots, generator training data, or generator
-checkpoint/LoRA weights.
+checkpoint/LoRA weights in git. Reviewer checkpoint assets are released
+separately on Hugging Face at `anon-submission7979/spinefairbench-generator`.
 
 ## Released
 
 - SD v1.5 img2img inference adapter with optional local LoRA loading.
 - Locked demographic prompt templates:
-  - `75-year-old female lumbar spine radiograph`
-  - `75-year-old male lumbar spine radiograph`
-  - `25-year-old female lumbar spine radiograph`
-  - `25-year-old male lumbar spine radiograph`
+  - `Lumbar spine X-ray of a 75-year-old female patient`
+  - `Lumbar spine X-ray of a 75-year-old male patient`
+  - `Lumbar spine X-ray of a 25-year-old female patient`
+  - `Lumbar spine X-ray of a 25-year-old male patient`
 - Inference defaults: 50 steps, guidance scale 5.0, strength 0.15, seed 42,
   LoRA rank 64 / alpha 128 metadata, and TSXR mask blend 0.7.
 - Mask-blending utility for user-supplied binary spine masks.
@@ -24,13 +25,15 @@ checkpoint/LoRA weights.
 
 ## Not Released
 
-- Generator checkpoint/LoRA weights.
+- Generator checkpoint/LoRA weights in this git repository.
 - Generator training pipeline and raw training radiographs.
 - TSXR/TotalSegmentator binaries or trained segmentation weights.
 - Provider-client orchestration, provider logs, credentials, or private paths.
 
-If you have an independently authorized Diffusers-compatible LoRA checkpoint,
-place it outside git and pass it with `--checkpoint`.
+Use the separately released LoRA-only safetensors checkpoint for reviewer
+inspection or optional local inference attempts. The same HF model repo also
+contains `latest.pt`, an archival full PyTorch training checkpoint that includes
+training state and is not the recommended inference artifact.
 
 ## Install Optional Dependencies
 
@@ -64,7 +67,8 @@ python3 -m spinefairbench.generator.infer \
   --device cuda
 ```
 
-Real inference requires a user-supplied source image and local checkpoint. Exact
-reproduction of the submitted benchmark image set may also require the original
-upstream radiographs, the unreleased production checkpoint, matching dependency
-versions, and comparable GPU/runtime behavior.
+Real inference requires a user-supplied source image and local checkpoint. The
+released LoRA is sufficient for reviewer inspection and optional inference
+attempts; exact reproduction of the submitted benchmark image set may also
+require the original upstream radiographs, source masks, original runtime
+conditions, and/or the archival `latest.pt` training checkpoint.
