@@ -10,12 +10,6 @@ anonymous reviewer artifact bundle is hosted separately:
 https://huggingface.co/datasets/anon-submission7979/spinefairbench-artifacts
 ```
 
-The de-anonymized public mirror is
-`https://huggingface.co/datasets/ahmedtaha100/spinefairbench-artifacts`. The
-anonymous and public HF repositories are separately checksummed release builds;
-use the repository named by your review/manuscript context and verify the
-tarball against the `.sha256` file downloaded from the same HF repository.
-
 ## Requirements
 
 - Python 3.11 or newer.
