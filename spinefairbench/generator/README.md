@@ -22,7 +22,7 @@ separately on Hugging Face at `anon-submission7979/spinefairbench-generator`.
   - `Lumbar spine X-ray of a 75-year-old male patient`
   - `Lumbar spine X-ray of a 25-year-old female patient`
   - `Lumbar spine X-ray of a 25-year-old male patient`
-- Inference defaults: 50 steps, guidance scale 5.0, strength 0.15, seed 42,
+- Inference defaults: 50 configured scheduler steps, guidance scale 5.0, strength 0.15, seed 42,
   LoRA rank 64 / alpha 128 metadata, and TSXR mask blend 0.7.
 - Mask-blending utility for user-supplied binary spine masks.
 - QC utility thresholds: SSIM >= 0.70, edge preservation >= 0.276 with 3x3
@@ -83,6 +83,7 @@ also needed for historical regeneration.
 
 The recorded training setup used 9,024 radiographs and a single H200, with LoRA
 rank 64 and alpha 128. Loss weights were reconstruction L1 = 1.0, PatchGAN =
-0.005, KL = 1e-7, and Stage-2 latent-cycle L1 = 1.0. This is provenance, not a
-runnable training configuration. VinDr-SpineXR and BUU-LSPINE data must be
+0.005, KL = 1e-7, and Stage-2 latent-cycle L1 = 1.0. The VAE was frozen, so
+the recorded KL term did not update trainable parameters. This is provenance,
+not a runnable training configuration. VinDr-SpineXR and BUU-LSPINE data must be
 obtained under their original terms.
