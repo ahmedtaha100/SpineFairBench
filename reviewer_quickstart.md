@@ -32,6 +32,8 @@ python reviewer_verify.py checksums artifacts/radiologist_validation_SHA256SUMS.
 
 Each checksum command must exit successfully. Repository text uses LF endings
 through .gitattributes. Do not rewrite artifact bytes or manifests to hide a mismatch.
+On Windows, extract under a short path such as C:\sfb; deeply nested working
+directories can exceed the legacy 260-character path limit for archive members.
 
 ## Paper results and accounting
 
