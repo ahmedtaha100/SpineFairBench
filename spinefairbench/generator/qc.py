@@ -103,7 +103,7 @@ def compute_qc(source_path: Path, generated_path: Path, *, include_lpips: bool =
 def passes_qc(metrics: dict[str, float | None], thresholds: QCThresholds | None = None) -> bool:
     thresholds = thresholds or QCThresholds()
     lpips_value = metrics.get("lpips")
-    lpips_ok = lpips_value is None or float(lpips_value) <= thresholds.lpips_max
+    lpips_ok = lpips_value is not None and float(lpips_value) <= thresholds.lpips_max
     return (
         float(metrics["ssim"] or 0.0) >= thresholds.ssim_min
         and float(metrics["edge_preservation"] or 0.0) >= thresholds.edge_preservation_min

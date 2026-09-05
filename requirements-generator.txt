@@ -7,6 +7,6 @@ safetensors>=0.4
 torch>=2.2
 transformers>=4.41
 
-# Optional, only for full QC parity checks:
+# Required for LPIPS measurement in the optional generator; not production QC parity:
 lpips>=0.1.4
 opencv-python>=4.8

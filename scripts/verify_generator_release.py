@@ -33,7 +33,6 @@ def main() -> None:
         "prompts": DEMOGRAPHIC_PROMPTS,
         "checkpoint_released": True,
         "checkpoint_repo": "anon-submission7979/spinefairbench-generator",
-        "public_checkpoint_repo": "ahmedtaha100/spinefairbench-generator",
         "recommended_checkpoint": "spinefairbench_sd15_lora.safetensors",
         "recommended_checkpoint_sha256": "21bbfa4ee50ff389c3a49edc9fa39f4e1f7c691fad85c34cbcce595f62b8d56c",
         "recommended_checksum_manifest": "SHA256SUMS.recommended.txt",

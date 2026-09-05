@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import statistics
@@ -10,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 CODE_ROOT = Path(__file__).resolve().parent
-DEFAULT_ARTIFACT_ROOT = CODE_ROOT.parent / "artifacts"
+DEFAULT_ARTIFACT_ROOT = CODE_ROOT / "artifacts"
 if str(CODE_ROOT) not in sys.path:
     sys.path.insert(0, str(CODE_ROOT))
 
@@ -255,7 +256,7 @@ def _endpoint_metrics(root: Path, model: str) -> dict[str, Any]:
     full_refusal_pairs = 0
     partial_refusal_pairs = 0
 
-    for gen in generated:
+    for gen in sorted(generated, key=lambda row: row["pair_id"]):
         src = sources.get(gen["pair_id"])
         if not src:
             continue
@@ -323,6 +324,10 @@ def command_parse_sample(args: argparse.Namespace) -> None:
 
 
 def command_table2(args: argparse.Namespace) -> None:
+    if args.model == "all":
+        for model in RETAINED_TABLE2_MODELS:
+            command_table2(argparse.Namespace(**{**vars(args), "model": model}))
+        return
     root = _artifact_root(args)
     metrics = _endpoint_metrics(root, args.model)
     recommendation_matches = metrics["recommendation_matches"]
@@ -332,24 +337,20 @@ def command_table2(args: argparse.Namespace) -> None:
     rec_change = 1.0 - agreement
     diag_consistency = sum(diagnostic_jaccards) / len(diagnostic_jaccards)
 
-    summary_path = _required(root, "artifacts/Results/analysis/common_core_1000_summary.json")
+    summary_path = _required(CODE_ROOT, "paper_results.json", kind="frozen manuscript result")
     summary = _load_json(summary_path)
-    panel = "full" if args.model in summary["panels"]["full"]["models"] else "baseline"
-    frozen_model = summary["panels"][panel]["models"][args.model]
-    frozen = frozen_model["primary_secondary_stats"]
-    frozen_quality = frozen_model.get("data_quality", {})
-    frozen_rec_change = 1.0 - frozen["recommendation"]["agreement_rate"]
-    frozen_diag = frozen["diagnostic_label"]["mean"]
-    rec_ci = frozen["recommendation"]["bootstrap_ci"]
-    rec_change_ci = (1.0 - rec_ci["upper"], 1.0 - rec_ci["lower"])
-    diag_ci = frozen["diagnostic_label"]["bootstrap_ci"]
+    frozen = summary["models"][args.model]
+    frozen_rec_change = frozen["rec_change"]
+    frozen_diag = frozen["diag_consistency"]
+    rec_ci = frozen["rec_change_ci"]
+    rec_change_ci = (rec_ci["lower"], rec_ci["upper"])
+    diag_ci = frozen["diag_consistency_ci"]
 
     print("Model:", args.model)
     print("Usable pairs:", len(recommendation_matches))
     print("Full-refusal pairs excluded:", metrics["full_refusal_pairs"])
     print("Partial-refusal pairs included:", metrics["partial_refusal_pairs"])
-    if "pair_usable" in frozen_quality:
-        print("Frozen summary usable pairs:", frozen_quality["pair_usable"])
+    print("Frozen manuscript usable pairs:", frozen["pairs"])
     print("Recomputed recommendation change:", f"{rec_change:.6f}", f"(rounded: {rec_change:.3f})")
     print("Frozen summary recommendation change:", f"{frozen_rec_change:.6f}", f"(rounded: {frozen_rec_change:.3f})")
     print(
@@ -363,17 +364,19 @@ def command_table2(args: argparse.Namespace) -> None:
         f"[{diag_ci['lower']:.3f}, {diag_ci['upper']:.3f}]",
     )
     if args.recompute_ci:
+        if args.bootstrap_iterations != summary["metadata"]["n_resamples"] or args.seed != summary["metadata"]["seed"]:
+            raise SystemExit("Exact manuscript CI verification requires 10000 resamples and base seed 20260426")
         recomputed_rec_ci = source_clustered_bootstrap_ci(
             metrics["recommendation_changed"],
             metrics["source_ids"],
             iterations=args.bootstrap_iterations,
-            seed=args.seed,
+            seed=args.seed + 11,
         )
         recomputed_diag_ci = source_clustered_bootstrap_ci(
             metrics["diagnostic_jaccards"],
             metrics["source_ids"],
             iterations=args.bootstrap_iterations,
-            seed=args.seed,
+            seed=args.seed + 23,
         )
         print(
             "Recomputed recommendation change 95% CI:",
@@ -385,16 +388,47 @@ def command_table2(args: argparse.Namespace) -> None:
         )
         print(
             "CI recomputation settings:",
-            f"source_clustered_percentile iterations={args.bootstrap_iterations} seed={args.seed}",
+            f"NumPy_PCG64_int32 iterations={args.bootstrap_iterations} recommendation_seed={args.seed + 11} diagnosis_seed={args.seed + 23}",
         )
+        for label, actual, expected in (
+            ("recommendation", recomputed_rec_ci, rec_change_ci),
+            ("diagnosis", recomputed_diag_ci, (diag_ci["lower"], diag_ci["upper"])),
+        ):
+            if any(abs(a - b) > 1e-12 for a, b in zip(actual, expected)):
+                raise SystemExit(f"Recomputed {label} CI does not match frozen manuscript")
     else:
         print("CI mode: frozen summary read; pass --recompute-ci to run source-clustered bootstrap.")
-    if "pair_usable" in frozen_quality and len(recommendation_matches) != int(frozen_quality["pair_usable"]):
+    if len(recommendation_matches) != frozen["pairs"]:
         raise SystemExit("Recomputed usable-pair count does not match frozen summary")
+    for field in ("full_refusals", "partial_refusals"):
+        metric = "full_refusal_pairs" if field == "full_refusals" else "partial_refusal_pairs"
+        if metrics[metric] != frozen[field]:
+            raise SystemExit(f"Recomputed {field} does not match frozen manuscript")
     if abs(rec_change - frozen_rec_change) > 1e-12:
         raise SystemExit("Recomputed recommendation change does not match frozen summary")
     if abs(diag_consistency - frozen_diag) > 1e-12:
         raise SystemExit("Recomputed diagnostic consistency does not match frozen summary")
+    print("Frozen manuscript verification: OK")
+
+
+def command_checksums(args: argparse.Namespace) -> None:
+    manifest = Path(args.manifest).resolve()
+    checked = 0
+    for line in manifest.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        expected, name = line.split(maxsplit=1)
+        path = manifest.parent / name.lstrip("*")
+        if not path.is_file():
+            raise SystemExit(f"Checksum file missing: {name}")
+        with path.open("rb") as handle:
+            actual = hashlib.file_digest(handle, "sha256").hexdigest()
+        if actual != expected:
+            raise SystemExit(f"Checksum mismatch: {name}")
+        checked += 1
+    if not checked:
+        raise SystemExit("Checksum manifest is empty")
+    print(f"Checksum verification: {checked} files OK")
 
 
 def command_diagnostic_scoring(args: argparse.Namespace) -> None:
@@ -712,6 +746,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Reviewer verification helpers for SpineFairBench submission artifacts.")
     sub = parser.add_subparsers(required=True)
 
+    checksums = sub.add_parser("checksums", help="Verify SHA-256 files relative to their manifest.")
+    checksums.add_argument("manifest", nargs="?", default=str(CODE_ROOT / "SHA256SUMS.txt"))
+    checksums.set_defaults(func=command_checksums)
+
     inspect = sub.add_parser("inspect")
     _add_artifact_arg(inspect)
     inspect.set_defaults(func=command_inspect)
@@ -727,10 +765,10 @@ def main() -> int:
 
     table2 = sub.add_parser("table2")
     _add_artifact_arg(table2)
-    table2.add_argument("--model", default="gpt-5.4")
+    table2.add_argument("--model", default="all", choices=(*RETAINED_TABLE2_MODELS, "all"))
     table2.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
     table2.add_argument("--bootstrap-iterations", type=int, default=10000)
-    table2.add_argument("--seed", type=int, default=42)
+    table2.add_argument("--seed", type=int, default=20260426)
     table2.set_defaults(func=command_table2)
 
     table3 = sub.add_parser("table3", help="Backward-compatible alias for table2.")
@@ -738,7 +776,7 @@ def main() -> int:
     table3.add_argument("--model", default="gpt-5.4")
     table3.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
     table3.add_argument("--bootstrap-iterations", type=int, default=10000)
-    table3.add_argument("--seed", type=int, default=42)
+    table3.add_argument("--seed", type=int, default=20260426)
     table3.set_defaults(func=command_table2)
 
     diagnostic = sub.add_parser("diagnostic-scoring", help="Print the frozen Table 2 diagnostic-label scoring path.")

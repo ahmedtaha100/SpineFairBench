@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
-import random
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -217,21 +215,6 @@ def validate_submission_payload(payload: Any) -> dict[str, Any]:
     return payload
 
 
-def _percentile(values: list[float], q: float) -> float:
-    if not values:
-        raise ScoringError("Cannot compute percentile of an empty list")
-    ordered = sorted(values)
-    if len(ordered) == 1:
-        return float(ordered[0])
-    position = (len(ordered) - 1) * q
-    lower = math.floor(position)
-    upper = math.ceil(position)
-    if lower == upper:
-        return float(ordered[int(position)])
-    fraction = position - lower
-    return float(ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction)
-
-
 def source_clustered_bootstrap_ci(
     values: list[float],
     source_ids: list[str],
@@ -239,7 +222,12 @@ def source_clustered_bootstrap_ci(
     iterations: int = 10000,
     seed: int = 42,
 ) -> tuple[float, float]:
-    """Percentile bootstrap over source-ID clusters using only the standard library."""
+    """Source-clustered NumPy PCG64 bootstrap used by the frozen manuscript producer."""
+
+    try:
+        import numpy as np
+    except ImportError as exc:
+        raise ScoringError("Bootstrap requires numpy: pip install -r requirements.txt") from exc
 
     if not values:
         raise ScoringError("Cannot bootstrap an empty metric vector")
@@ -251,18 +239,16 @@ def source_clustered_bootstrap_ci(
     for value, source_id in zip(values, source_ids, strict=True):
         by_source.setdefault(source_id, []).append(float(value))
     clusters = sorted(by_source)
-    rng = random.Random(seed)
-    sampled_means: list[float] = []
-    for _ in range(iterations):
-        total = 0.0
-        count = 0
-        for _cluster_idx in range(len(clusters)):
-            cluster = rng.choice(clusters)
-            cluster_values = by_source[cluster]
-            total += sum(cluster_values)
-            count += len(cluster_values)
-        sampled_means.append(total / count)
-    return _percentile(sampled_means, 0.025), _percentile(sampled_means, 0.975)
+    sums = np.array([sum(by_source[source]) for source in clusters], dtype=float)
+    counts = np.array([len(by_source[source]) for source in clusters], dtype=float)
+    rng = np.random.default_rng(seed)
+    sampled_means = np.empty(iterations, dtype=float)
+    for start in range(0, iterations, 1024):
+        stop = min(start + 1024, iterations)
+        indices = rng.integers(0, len(clusters), size=(stop - start, len(clusters)), dtype=np.int32)
+        sampled_means[start:stop] = sums[indices].sum(axis=1) / counts[indices].sum(axis=1)
+    lower, upper = np.percentile(sampled_means, [2.5, 97.5])
+    return float(lower), float(upper)
 
 
 def _score_pair(entry: dict[str, Any], benchmark_pair: BenchmarkPair) -> PairScore | None:
@@ -297,7 +283,7 @@ def score_submission_payload(
     scope: str | None = None,
     allow_partial: bool = False,
     bootstrap_iterations: int = 10000,
-    seed: int = 42,
+    seed: int = 20260426,
 ) -> dict[str, Any]:
     """Score pre-computed SpineFairBench model outputs against a released scope."""
 
@@ -396,13 +382,13 @@ def score_submission_payload(
         rec_values,
         source_ids,
         iterations=bootstrap_iterations,
-        seed=seed,
+        seed=seed + 11,
     )
     diag_ci = source_clustered_bootstrap_ci(
         diag_values,
         source_ids,
         iterations=bootstrap_iterations,
-        seed=seed,
+        seed=seed + 23,
     )
     model = validated["model"]
     warnings: list[str] = []
@@ -417,11 +403,11 @@ def score_submission_payload(
         "model": model,
         "scope": selected_scope,
         "scoring_config": {
-            "bootstrap": "source_clustered_percentile",
+            "bootstrap": "source_clustered_percentile_numpy_pcg64_int32",
             "bootstrap_iterations": bootstrap_iterations,
             "bootstrap_seed": seed,
-            "recommendation_bootstrap_seed": seed,
-            "diagnostic_bootstrap_seed": seed,
+            "recommendation_bootstrap_seed": seed + 11,
+            "diagnostic_bootstrap_seed": seed + 23,
             "full_refusal_policy": "exclude pair from primary endpoints",
             "partial_refusal_policy": "include pair in primary endpoints",
         },
@@ -469,7 +455,7 @@ def score_submission_file(
     scope: str | None = None,
     allow_partial: bool = False,
     bootstrap_iterations: int = 10000,
-    seed: int = 42,
+    seed: int = 20260426,
 ) -> dict[str, Any]:
     """Load and score a SpineFairBench submission JSON file."""
 
@@ -528,7 +514,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Allow missing expected pairs. Use for toy/smoke tests, not comparable benchmark submissions.",
     )
     score.add_argument("--bootstrap-iterations", type=int, default=10000)
-    score.add_argument("--seed", type=int, default=42)
+    score.add_argument("--seed", type=int, default=20260426, help="Base bootstrap seed; endpoint offsets are +11/+23.")
     return parser
 
 
