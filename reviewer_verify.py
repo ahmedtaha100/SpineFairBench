@@ -44,7 +44,7 @@ def _count_lines(path: Path) -> int:
 
 
 def _artifact_root(args: argparse.Namespace) -> Path:
-    value = getattr(args, "artifacts", None) or getattr(args, "root", None)
+    value = getattr(args, "artifacts", None)
     return Path(value or DEFAULT_ARTIFACT_ROOT).resolve()
 
 
@@ -99,11 +99,6 @@ def command_inspect(args: argparse.Namespace) -> None:
     ]
     for rel in required_artifacts:
         _required(root, rel)
-    if not (
-        (root / "artifacts/Results/analysis/mitigation_stage1_confidence_sample_manifest.json").exists()
-        or (root / "artifacts/Results/analysis/mitigation_stage1_trace_manifest.json").exists()
-    ):
-        raise SystemExit("Missing required artifact: Stage-1 confidence sample manifest or trace manifest")
     for panel in ("full_pipeline_retained", "baseline_only_retained", "full_pipeline_mitigation_retained"):
         base = root / "artifacts" / "Results" / "final_inputs" / "panels" / panel
         _required(root, str(base.relative_to(root) / "panel_manifest.json"))
@@ -441,10 +436,6 @@ def command_diagnostic_scoring(args: argparse.Namespace) -> None:
     print("Released diagnostic-label registry size:", len(PATHOLOGY_SYNONYMS))
     print("Released diagnostic-label categories:", ", ".join(sorted(PATHOLOGY_SYNONYMS)))
     print("Both-empty diagnostic-label Jaccard:", f"{compute_jaccard(set(), set()):.1f}")
-    print(
-        "Archival tokenized helper:",
-        "The archival tokenized-diagnosis helper is not used for frozen Table 2; see Git history.",
-    )
 
 
 def command_gap_sensitivity(args: argparse.Namespace) -> None:
@@ -742,7 +733,6 @@ def command_mitigation(args: argparse.Namespace) -> None:
 
 def _add_artifact_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--artifacts", default=str(DEFAULT_ARTIFACT_ROOT), help="Path to the companion artifacts folder.")
-    parser.add_argument("--root", default=None, help=argparse.SUPPRESS)
 
 
 def main() -> int:
@@ -773,14 +763,6 @@ def main() -> int:
     table2.add_argument("--bootstrap-iterations", type=int, default=10000)
     table2.add_argument("--seed", type=int, default=42)
     table2.set_defaults(func=command_table2)
-
-    table3 = sub.add_parser("table3", help="Backward-compatible alias for table2.")
-    _add_artifact_arg(table3)
-    table3.add_argument("--model", default="gpt-5.4")
-    table3.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
-    table3.add_argument("--bootstrap-iterations", type=int, default=10000)
-    table3.add_argument("--seed", type=int, default=42)
-    table3.set_defaults(func=command_table2)
 
     diagnostic = sub.add_parser("diagnostic-scoring", help="Print the frozen Table 2 diagnostic-label scoring path.")
     diagnostic.set_defaults(func=command_diagnostic_scoring)

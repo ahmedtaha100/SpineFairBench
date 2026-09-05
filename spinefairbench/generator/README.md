@@ -1,7 +1,7 @@
 # SpineFairBench Illustrative Generator
 
 This package provides an illustrative Diffusers adapter, locked prompt templates,
-mask-blending utilities, QC utilities, and smoke-test scripts. It uses stock
+mask-blending utilities, and QC utilities. It uses stock
 img2img followed by pixel-space blending. Production blended source latents at
 each denoising step and applied CLIP-guided latent drift outside the mask.
 This adapter does not reproduce the released benchmark images or production QC.
@@ -29,7 +29,6 @@ separately on Hugging Face at `anon-submission7979/spinefairbench-generator`.
   dilation, LPIPS <= 0.40. All three measurements are required to pass.
   The adapter's gradient-based edge calculation differs from production Canny
   edges; matching threshold values does not establish production parity.
-- Standard-library synthetic smoke-test input and metadata writer.
 
 ## Not Released
 
@@ -52,26 +51,26 @@ Generator dependencies are separate:
 python -m pip install -r requirements-generator.txt
 ```
 
-## Dry Run
+## Download the Checkpoint
 
-```bash
-python scripts/run_generator_smoke_test.py --dry-run --output generator_smoke
+Run these commands from the code repository root. The pinned revision includes
+the recommended checksum manifest and does not require the full training checkpoint.
+Install the hf CLI with `python -m pip install huggingface_hub` if needed.
+
+```sh
+hf download anon-submission7979/spinefairbench-generator spinefairbench_sd15_lora.safetensors generator_config.yaml SHA256SUMS.recommended.txt --repo-type model --revision f3ae3af9564b7cae1b93ebfbc2cf2921b155d436 --local-dir generator_assets
+python reviewer_verify.py checksums generator_assets/SHA256SUMS.recommended.txt
 ```
 
-The dry run creates a synthetic non-clinical test image and JSON metadata. It
-does not run SD inference and does not require a checkpoint.
+The LoRA SHA-256 is
+`21bbfa4ee50ff389c3a49edc9fa39f4e1f7c691fad85c34cbcce595f62b8d56c`.
+The downloaded generator_config.yaml records release metadata; use the repository's
+inference_sd15_lora.yaml with the inference command below.
 
 ## Real Inference
 
-```bash
-python -m spinefairbench.generator.infer \
-  --input /path/to/user_supplied_source.png \
-  --output /tmp/spinefairbench_generator \
-  --checkpoint /path/to/local_lora.safetensors \
-  --config spinefairbench/generator/configs/inference_sd15_lora.yaml \
-  --demographic elderly_female \
-  --seed 42 \
-  --device cuda
+```sh
+python -m spinefairbench.generator.infer --input source.png --output generator_output --checkpoint generator_assets/spinefairbench_sd15_lora.safetensors --config spinefairbench/generator/configs/inference_sd15_lora.yaml --demographic elderly_female --seed 42 --device cuda
 ```
 
 Real inference requires a user-supplied source image and local checkpoint.
@@ -79,3 +78,11 @@ Use the fixed released images for benchmark scoring. Loading the released LoRA
 or archival training checkpoint does not make this adapter production-faithful;
 the production inference path, original source images, masks, and runtime are
 also needed for historical regeneration.
+
+## Training Provenance
+
+The recorded training setup used 9,024 radiographs and a single H200, with LoRA
+rank 64 and alpha 128. Loss weights were reconstruction L1 = 1.0, PatchGAN =
+0.005, KL = 1e-7, and Stage-2 latent-cycle L1 = 1.0. This is provenance, not a
+runnable training configuration. VinDr-SpineXR and BUU-LSPINE data must be
+obtained under their original terms.

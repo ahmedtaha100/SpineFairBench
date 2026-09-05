@@ -113,8 +113,13 @@ generator dependencies are in requirements-generator.txt.
 
 The metrics/ and evaluation/ modules retain the original endpoint, prompt, and
 Stage-1 parser definitions for inspection. The optional analysis/mitigation.py
-retains the mitigation analysis. Unused private-analysis and packaging scaffolds
-are available in Git history.
+retains the historical mitigation analysis, which requires original trace paths
+and a complete Stage-1 output tree. For the released bundle, use the documented
+reviewer_verify.py commands. Retired release tools are available in Git history.
+
+For anonymous review, attach the code supplement ZIP without Git metadata.
+An author-owned repository URL and its commit history identify the authors;
+use the pinned anonymous artifact download in the reviewer quickstart.
 
 Code uses the [MIT license](LICENSE); documentation uses [LICENSE-DOCS](LICENSE-DOCS).
 Data and derived artifacts retain their own terms. The code license does not

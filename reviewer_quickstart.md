@@ -8,9 +8,6 @@ PowerShell and a POSIX shell and verify existing files and saved reports.
 The historical anonymous bundle is pinned to Hugging Face revision
 fc283334897cc47e07757184f27f00c575537657, archive SHA-256
 7fc99c95abcfad823f71dd10ddbf9e82b6e7fd0b8d808ad3b4d62913efa57380.
-The personal mirror at ee679338f9a54d5c5e281eebeb841edac06332fe has archive SHA-256
-f90f8cc54d9ef67d6ffc1bb21d53f9fcf5cff9ca94300353aa83db2ad967e238.
-Do not interchange their checksums.
 
 The historical archive contains synthetic images, source identifiers, report
 text, and pseudonymized reader rows. It is not aggregate-only. Use it under the
@@ -18,10 +15,12 @@ applicable dataset and reader-data permissions. Source radiographs and masks are
 not included. Aggregate access alone cannot reproduce per-pair scoring.
 This guide does not grant redistribution rights.
 
-For an authorized copy, use the hf CLI or download the two files from the exact
-revision through Hugging Face:
+For an authorized copy, download the two files from the
+[pinned Hugging Face revision](https://huggingface.co/datasets/anon-submission7979/spinefairbench-artifacts/tree/fc283334897cc47e07757184f27f00c575537657),
+or install the hf CLI and use the command below:
 
 ~~~sh
+python -m pip install huggingface_hub
 hf download anon-submission7979/spinefairbench-artifacts spinefairbench_artifacts.tar.gz spinefairbench_artifacts.tar.gz.sha256 --repo-type dataset --revision fc283334897cc47e07757184f27f00c575537657 --local-dir .
 python reviewer_verify.py checksums spinefairbench_artifacts.tar.gz.sha256
 tar -xzf spinefairbench_artifacts.tar.gz
