@@ -46,7 +46,31 @@ class CounterfactualGeneratorPipeline:
             safety_checker=None,
         )
         pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
-        pipe.load_lora_weights(str(checkpoint_path.parent), weight_name=checkpoint_path.name)
+        metadata = {}
+        if checkpoint_path.suffix == ".safetensors":
+            from safetensors import safe_open
+
+            with safe_open(checkpoint_path, framework="pt", device="cpu") as checkpoint:
+                metadata = checkpoint.metadata() or {}
+        if metadata.get("format") == "spinefairbench_lora_safetensors":
+            from peft import LoraConfig
+            from safetensors.torch import load_file
+
+            # The released tensors retain PEFT's wrapper and adapter names.
+            pipe.unet.add_adapter(LoraConfig(
+                r=int(metadata["lora_rank"]),
+                lora_alpha=int(metadata["lora_alpha"]),
+                target_modules=["to_q", "to_k", "to_v", "to_out.0"],
+            ))
+            weights = {
+                key.removeprefix("base_model.model."): value
+                for key, value in load_file(str(checkpoint_path)).items()
+            }
+            incompatible = pipe.unet.load_state_dict(weights, strict=False)
+            if incompatible.unexpected_keys or any("lora_" in key for key in incompatible.missing_keys):
+                raise ValueError("Released LoRA tensors do not match the base UNet")
+        else:
+            pipe.load_lora_weights(str(checkpoint_path.parent), weight_name=checkpoint_path.name)
         pipe = pipe.to(device)
         pipe.set_progress_bar_config(disable=True)
         self._pipe = pipe
