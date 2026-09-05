@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
 
 import reviewer_verify as verify
 from spinefairbench.generator.qc import passes_qc
@@ -16,14 +15,14 @@ from spinefairbench.release.scoring import source_clustered_bootstrap_ci
 
 
 class ReproductionTests(unittest.TestCase):
-    def test_bootstrap_matches_archived_producer(self):
-        # Archived run3_derivations._source_cluster_ci, unequal cluster sizes,
-        # crossing its 1,024-resample chunk boundary. These are synthetic data.
+    def test_bootstrap_matches_numpy_cluster_resampling(self):
+        # NumPy seed-42 reference from direct resampling of four synthetic
+        # source clusters of unequal sizes; crosses the 1,024-draw boundary.
         actual = source_clustered_bootstrap_ci(
             [0., 1., .2, .4, .8, .3, .7], ["a", "a", "b", "b", "b", "c", "d"],
-            iterations=1031, seed=20260437,
+            iterations=1031, seed=42,
         )
-        self.assertEqual(actual, (0.38249999999999995, 0.6))
+        self.assertEqual(actual, (0.3833333333333333, 0.605))
 
     def test_table2_checks_frozen_intervals_and_refusal_counts(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -39,24 +38,27 @@ class ReproductionTests(unittest.TestCase):
                          "response": "Normal spine. Physical therapy recommended."}
                         for role in ("source", "generated")]
                 (path / "evaluation_results.json").write_text(json.dumps(rows if models else []))
-            frozen = {"pairs": 1, "full_refusals": 0, "partial_refusals": 0,
-                      "rec_change": 0., "diag_consistency": 1.,
-                      "rec_change_ci": {"lower": 0., "upper": 0.},
-                      "diag_consistency_ci": {"lower": 1., "upper": 1.}}
-            summary = {"metadata": {"n_resamples": 10000, "seed": 20260426},
-                       "models": {"gpt-5.4": frozen}}
+            rec_ci = {"lower": 1., "upper": 1.}
+            quality = {"pair_usable": 1, "pair_full_refusals": 0, "pair_partial_refusals": 0}
+            frozen = {"data_quality": quality, "primary_secondary_stats": {
+                "recommendation": {"agreement_rate": 1., "bootstrap_ci": rec_ci},
+                "diagnostic_label": {"mean": 1., "bootstrap_ci": {"lower": 1., "upper": 1.}}}}
+            summary = {"source_clustered_bootstrap": {"iterations": 10000},
+                       "panels": {"full": {"models": {"gpt-5.4": frozen}}}}
+            summary_path = root / "artifacts/Results/analysis/common_core_1000_summary.json"
+            summary_path.parent.mkdir(parents=True)
             args = argparse.Namespace(artifacts=str(root), model="gpt-5.4",
-                                      recompute_ci=True, bootstrap_iterations=10000, seed=20260426)
-            with patch.object(verify, "CODE_ROOT", root), contextlib.redirect_stdout(io.StringIO()):
-                (root / "paper_results.json").write_text(json.dumps(summary))
+                                      recompute_ci=True, bootstrap_iterations=10000, seed=42)
+            with contextlib.redirect_stdout(io.StringIO()):
+                summary_path.write_text(json.dumps(summary))
                 verify.command_table2(args)
-                frozen["rec_change_ci"]["upper"] = .1
-                (root / "paper_results.json").write_text(json.dumps(summary))
+                rec_ci["lower"] = .9
+                summary_path.write_text(json.dumps(summary))
                 with self.assertRaisesRegex(SystemExit, "CI does not match"):
                     verify.command_table2(args)
-                frozen["rec_change_ci"]["upper"] = 0.
-                frozen["full_refusals"] = 1
-                (root / "paper_results.json").write_text(json.dumps(summary))
+                rec_ci["lower"] = 1.
+                quality["pair_full_refusals"] = 1
+                summary_path.write_text(json.dumps(summary))
                 with self.assertRaisesRegex(SystemExit, "full_refusals does not match"):
                     verify.command_table2(args)
 

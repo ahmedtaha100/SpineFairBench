@@ -222,7 +222,7 @@ def source_clustered_bootstrap_ci(
     iterations: int = 10000,
     seed: int = 42,
 ) -> tuple[float, float]:
-    """Source-clustered NumPy PCG64 bootstrap used by the frozen manuscript producer."""
+    """Source-clustered percentile bootstrap using NumPy PCG64."""
 
     try:
         import numpy as np
@@ -245,7 +245,7 @@ def source_clustered_bootstrap_ci(
     sampled_means = np.empty(iterations, dtype=float)
     for start in range(0, iterations, 1024):
         stop = min(start + 1024, iterations)
-        indices = rng.integers(0, len(clusters), size=(stop - start, len(clusters)), dtype=np.int32)
+        indices = rng.integers(0, len(clusters), size=(stop - start, len(clusters)))
         sampled_means[start:stop] = sums[indices].sum(axis=1) / counts[indices].sum(axis=1)
     lower, upper = np.percentile(sampled_means, [2.5, 97.5])
     return float(lower), float(upper)
@@ -283,7 +283,7 @@ def score_submission_payload(
     scope: str | None = None,
     allow_partial: bool = False,
     bootstrap_iterations: int = 10000,
-    seed: int = 20260426,
+    seed: int = 42,
 ) -> dict[str, Any]:
     """Score pre-computed SpineFairBench model outputs against a released scope."""
 
@@ -382,13 +382,13 @@ def score_submission_payload(
         rec_values,
         source_ids,
         iterations=bootstrap_iterations,
-        seed=seed + 11,
+        seed=seed,
     )
     diag_ci = source_clustered_bootstrap_ci(
         diag_values,
         source_ids,
         iterations=bootstrap_iterations,
-        seed=seed + 23,
+        seed=seed,
     )
     model = validated["model"]
     warnings: list[str] = []
@@ -403,11 +403,9 @@ def score_submission_payload(
         "model": model,
         "scope": selected_scope,
         "scoring_config": {
-            "bootstrap": "source_clustered_percentile_numpy_pcg64_int32",
+            "bootstrap": "source_clustered_percentile_numpy_pcg64",
             "bootstrap_iterations": bootstrap_iterations,
             "bootstrap_seed": seed,
-            "recommendation_bootstrap_seed": seed + 11,
-            "diagnostic_bootstrap_seed": seed + 23,
             "full_refusal_policy": "exclude pair from primary endpoints",
             "partial_refusal_policy": "include pair in primary endpoints",
         },
@@ -455,7 +453,7 @@ def score_submission_file(
     scope: str | None = None,
     allow_partial: bool = False,
     bootstrap_iterations: int = 10000,
-    seed: int = 20260426,
+    seed: int = 42,
 ) -> dict[str, Any]:
     """Load and score a SpineFairBench submission JSON file."""
 
@@ -514,7 +512,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Allow missing expected pairs. Use for toy/smoke tests, not comparable benchmark submissions.",
     )
     score.add_argument("--bootstrap-iterations", type=int, default=10000)
-    score.add_argument("--seed", type=int, default=20260426, help="Base bootstrap seed; endpoint offsets are +11/+23.")
+    score.add_argument("--seed", type=int, default=42, help="Bootstrap seed used independently for each endpoint.")
     return parser
 
 

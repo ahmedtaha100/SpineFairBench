@@ -47,15 +47,14 @@ python reviewer_verify.py radiologist
 ~~~
 
 The table2 command verifies all nine primary rows and full/partial refusals
-against paper_results.json. It reads that archived derivation's confidence
-intervals without recomputing them. All primary point estimates match the latest
-preprint; six of its 18 intervals differ and remain under provenance review.
-The rows below describe the archived reference, including Qwen's differing CIs:
+against artifacts/Results/analysis/common_core_1000_summary.json. It reads the
+saved confidence intervals without recomputing them. All 18 primary point
+estimates and all 36 displayed interval bounds match the final paper.
 
 | Model | Usable pairs | Recommendation change (95% CI) | Diagnostic consistency (95% CI) |
 |---|---:|---|---|
 | GPT-5.4 | 3,998 | 0.694 [0.678, 0.710] | 0.649 [0.640, 0.657] |
-| Qwen2.5-VL | 3,998 | 0.293 [0.270, 0.317] | 0.545 [0.526, 0.564] |
+| Qwen2.5-VL | 3,998 | 0.293 [0.271, 0.318] | 0.545 [0.525, 0.565] |
 
 Dataset checks expect 11,795 QC-passed images and rows, 11,948 attempted QC rows,
 and no source PNGs. Reader checks expect 443/450 accepted pairs and 1,307/1,350
@@ -69,10 +68,10 @@ python -m pip install -r requirements.txt
 python reviewer_verify.py table2 --recompute-ci
 ~~~
 
-This uses sorted source clusters, NumPy PCG64, int32 resampling indices, 10,000
-resamples, and base seed 20260426 with offsets +11/+23. It checks intervals to
-absolute tolerance 1e-12. Other settings are rejected for archived-record verification.
-The old bundle summary contains earlier CIs and remains a historical artifact.
+This uses sorted source clusters, NumPy PCG64, 10,000 resamples, and seed 42
+independently for each endpoint. The retained July audit identified this RNG
+and seed as matching the frozen intervals. The command checks intervals to
+absolute tolerance 1e-12 and rejects other settings for frozen-record verification.
 
 ## Optional scorer inspection
 

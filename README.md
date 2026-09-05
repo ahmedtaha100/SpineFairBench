@@ -30,27 +30,26 @@ python reviewer_verify.py mitigation
 python reviewer_verify.py radiologist
 ~~~
 
-The table2 command verifies all nine models against [paper_results.json](paper_results.json),
-an archived manuscript derivation, including point estimates, usable pairs,
-and full/partial refusal counts. It reads the frozen confidence intervals unless
+The table2 command verifies all nine models against the bundle's frozen
+artifacts/Results/analysis/common_core_1000_summary.json, including point estimates,
+usable pairs, and full/partial refusal counts. It reads confidence intervals unless
 --recompute-ci is explicitly supplied. No model calls or image generation occur.
 Use --model gpt-5.4 to check one row and --artifacts PATH for a bundle elsewhere.
 
-All 18 primary point estimates agree with the latest preprint, but six of its
-18 confidence intervals differ from this archived derivation. Interval provenance
-remains unresolved; the following command verifies the archived record, not yet
-the latest paper's intervals. The bundle's common_core_1000_summary.json contains
-a different bootstrap record. Optional interval replay requires pinned NumPy:
+All 18 primary point estimates and all 36 displayed interval bounds in that
+summary match the final paper. Its SHA-256 is
+e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5.
+Optional interval replay requires pinned NumPy:
 
 ~~~sh
 python -m pip install -r requirements.txt
 python reviewer_verify.py table2 --recompute-ci
 ~~~
 
-This follows the archived manuscript producer: 10,000 source-clustered resamples,
-NumPy PCG64 with int32 indices, base seed 20260426, and offsets +11 for
-recommendations and +23 for diagnoses. The command fails if any interval differs
-by more than 1e-12. It recomputes summaries from saved reports, not model inference.
+Replay uses 10,000 source-clustered resamples and NumPy PCG64 with seed 42
+independently for each endpoint, matching the retained July audit's RNG finding.
+The command fails if an interval differs from the frozen summary by more than
+1e-12. It recomputes summaries from saved reports and makes no model calls.
 
 ## Score a new model
 
@@ -68,7 +67,7 @@ python -m spinefairbench.release.scoring score --artifacts artifacts --submissio
 The five-pair toy fixture yields recommendation change 0.400 [0.000, 0.500]
 and diagnostic consistency 1.000 [1.000, 1.000]. For a full benchmark submission,
 use scope "common-core-1000", 10,000 bootstrap iterations, and omit --allow-partial.
-The default base seed and endpoint offsets match the manuscript verifier.
+The default seed 42 matches the manuscript verifier.
 The scorer rejects incomplete coverage and records refusals, source-clustered
 intervals, coverage, and per-pair scores. Full refusals are excluded; partial
 refusals remain. Resolve API errors before submitting reports; do not convert
@@ -107,7 +106,7 @@ python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ~~~
 
-Four small regression tests cover the archived bootstrap, frozen-result checks,
+Four small regression tests cover NumPy cluster resampling, frozen-result checks,
 checksum failures, and missing-LPIPS QC. They use synthetic fixtures and make
 no model calls. Optional mitigation analysis requires requirements-analysis.txt;
 generator dependencies are in requirements-generator.txt.
