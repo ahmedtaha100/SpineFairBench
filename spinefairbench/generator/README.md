@@ -29,7 +29,7 @@ separately on Hugging Face at `anon-submission7979/spinefairbench-generator`.
   dilation, LPIPS <= 0.40. All three measurements are required to pass.
   The adapter's gradient-based edge calculation differs from production Canny
   edges; matching threshold values does not establish production parity.
-- Standard-library dry-run release verifier and smoke-test metadata writer.
+- Standard-library synthetic smoke-test input and metadata writer.
 
 ## Not Released
 
@@ -55,7 +55,6 @@ python -m pip install -r requirements-generator.txt
 ## Dry Run
 
 ```bash
-python scripts/verify_generator_release.py --dry-run
 python scripts/run_generator_smoke_test.py --dry-run --output generator_smoke
 ```
 

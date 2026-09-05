@@ -337,7 +337,7 @@ def command_table2(args: argparse.Namespace) -> None:
     rec_change = 1.0 - agreement
     diag_consistency = sum(diagnostic_jaccards) / len(diagnostic_jaccards)
 
-    summary_path = _required(CODE_ROOT, "paper_results.json", kind="frozen manuscript result")
+    summary_path = _required(CODE_ROOT, "paper_results.json", kind="archived result reference")
     summary = _load_json(summary_path)
     frozen = summary["models"][args.model]
     frozen_rec_change = frozen["rec_change"]
@@ -350,7 +350,7 @@ def command_table2(args: argparse.Namespace) -> None:
     print("Usable pairs:", len(recommendation_matches))
     print("Full-refusal pairs excluded:", metrics["full_refusal_pairs"])
     print("Partial-refusal pairs included:", metrics["partial_refusal_pairs"])
-    print("Frozen manuscript usable pairs:", frozen["pairs"])
+    print("Archived reference usable pairs:", frozen["pairs"])
     print("Recomputed recommendation change:", f"{rec_change:.6f}", f"(rounded: {rec_change:.3f})")
     print("Frozen summary recommendation change:", f"{frozen_rec_change:.6f}", f"(rounded: {frozen_rec_change:.3f})")
     print(
@@ -365,7 +365,7 @@ def command_table2(args: argparse.Namespace) -> None:
     )
     if args.recompute_ci:
         if args.bootstrap_iterations != summary["metadata"]["n_resamples"] or args.seed != summary["metadata"]["seed"]:
-            raise SystemExit("Exact manuscript CI verification requires 10000 resamples and base seed 20260426")
+            raise SystemExit("Archived CI verification requires 10000 resamples and base seed 20260426")
         recomputed_rec_ci = source_clustered_bootstrap_ci(
             metrics["recommendation_changed"],
             metrics["source_ids"],
@@ -395,7 +395,7 @@ def command_table2(args: argparse.Namespace) -> None:
             ("diagnosis", recomputed_diag_ci, (diag_ci["lower"], diag_ci["upper"])),
         ):
             if any(abs(a - b) > 1e-12 for a, b in zip(actual, expected)):
-                raise SystemExit(f"Recomputed {label} CI does not match frozen manuscript")
+                raise SystemExit(f"Recomputed {label} CI does not match archived reference")
     else:
         print("CI mode: frozen summary read; pass --recompute-ci to run source-clustered bootstrap.")
     if len(recommendation_matches) != frozen["pairs"]:
@@ -403,12 +403,12 @@ def command_table2(args: argparse.Namespace) -> None:
     for field in ("full_refusals", "partial_refusals"):
         metric = "full_refusal_pairs" if field == "full_refusals" else "partial_refusal_pairs"
         if metrics[metric] != frozen[field]:
-            raise SystemExit(f"Recomputed {field} does not match frozen manuscript")
+            raise SystemExit(f"Recomputed {field} does not match archived reference")
     if abs(rec_change - frozen_rec_change) > 1e-12:
         raise SystemExit("Recomputed recommendation change does not match frozen summary")
     if abs(diag_consistency - frozen_diag) > 1e-12:
         raise SystemExit("Recomputed diagnostic consistency does not match frozen summary")
-    print("Frozen manuscript verification: OK")
+    print("Archived reference verification: OK")
 
 
 def command_checksums(args: argparse.Namespace) -> None:
@@ -440,7 +440,7 @@ def command_diagnostic_scoring(args: argparse.Namespace) -> None:
     print("Both-empty diagnostic-label Jaccard:", f"{compute_jaccard(set(), set()):.1f}")
     print(
         "Archival tokenized helper:",
-        "spinefairbench.analysis.endpoints._extract_diagnosis_tokens is not used for frozen Table 2.",
+        "The archival tokenized-diagnosis helper is not used for frozen Table 2; see Git history.",
     )
 
 

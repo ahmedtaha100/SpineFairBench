@@ -12,7 +12,7 @@ appropriateness or isolate a causal demographic effect. The radiologist study
 assessed plausibility and pathology preservation in a stratified sample; it did
 not validate perceived target age or sex.
 
-## Reproduce the paper
+## Verify retained results
 
 Use Python 3.11 or newer. Frozen point-estimate, count, and checksum checks use
 only the standard library. Follow the [reviewer quickstart](reviewer_quickstart.md)
@@ -31,14 +31,16 @@ python reviewer_verify.py radiologist
 ~~~
 
 The table2 command verifies all nine models against [paper_results.json](paper_results.json),
-the existing manuscript derivation, including point estimates, usable pairs,
+an archived manuscript derivation, including point estimates, usable pairs,
 and full/partial refusal counts. It reads the frozen confidence intervals unless
 --recompute-ci is explicitly supplied. No model calls or image generation occur.
 Use --model gpt-5.4 to check one row and --artifacts PATH for a bundle elsewhere.
 
-The older bundle's common_core_1000_summary.json uses an earlier bootstrap record.
-Its intervals are not the manuscript intervals. Optional exact interval
-verification requires the pinned NumPy dependency:
+All 18 primary point estimates agree with the latest preprint, but six of its
+18 confidence intervals differ from this archived derivation. Interval provenance
+remains unresolved; the following command verifies the archived record, not yet
+the latest paper's intervals. The bundle's common_core_1000_summary.json contains
+a different bootstrap record. Optional interval replay requires pinned NumPy:
 
 ~~~sh
 python -m pip install -r requirements.txt
@@ -107,8 +109,14 @@ python -m unittest discover -s tests -v
 
 Four small regression tests cover the archived bootstrap, frozen-result checks,
 checksum failures, and missing-LPIPS QC. They use synthetic fixtures and make
-no model calls. Optional archival analysis and generator dependencies are separate.
+no model calls. Optional mitigation analysis requires requirements-analysis.txt;
+generator dependencies are in requirements-generator.txt.
 
-Code is MIT-licensed; documentation uses [LICENSE-DOCS](LICENSE-DOCS).
+The metrics/ and evaluation/ modules retain the original endpoint, prompt, and
+Stage-1 parser definitions for inspection. The optional analysis/mitigation.py
+retains the mitigation analysis. Unused private-analysis and packaging scaffolds
+are available in Git history.
+
+Code uses the [MIT license](LICENSE); documentation uses [LICENSE-DOCS](LICENSE-DOCS).
 Data and derived artifacts retain their own terms. The code license does not
 grant rights to source radiographs or reader records.

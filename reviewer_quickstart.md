@@ -35,7 +35,7 @@ through .gitattributes. Do not rewrite artifact bytes or manifests to hide a mis
 On Windows, extract under a short path such as C:\sfb; deeply nested working
 directories can exceed the legacy 260-character path limit for archive members.
 
-## Paper results and accounting
+## Retained results and accounting
 
 ~~~sh
 python reviewer_verify.py inspect
@@ -47,8 +47,10 @@ python reviewer_verify.py radiologist
 ~~~
 
 The table2 command verifies all nine primary rows and full/partial refusals
-against paper_results.json. It reads the manuscript's frozen confidence
-intervals without recomputing them. Examples:
+against paper_results.json. It reads that archived derivation's confidence
+intervals without recomputing them. All primary point estimates match the latest
+preprint; six of its 18 intervals differ and remain under provenance review.
+The rows below describe the archived reference, including Qwen's differing CIs:
 
 | Model | Usable pairs | Recommendation change (95% CI) | Diagnostic consistency (95% CI) |
 |---|---:|---|---|
@@ -69,7 +71,7 @@ python reviewer_verify.py table2 --recompute-ci
 
 This uses sorted source clusters, NumPy PCG64, int32 resampling indices, 10,000
 resamples, and base seed 20260426 with offsets +11/+23. It checks intervals to
-absolute tolerance 1e-12. Other settings are rejected for exact verification.
+absolute tolerance 1e-12. Other settings are rejected for archived-record verification.
 The old bundle summary contains earlier CIs and remains a historical artifact.
 
 ## Optional scorer inspection
