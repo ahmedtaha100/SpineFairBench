@@ -84,6 +84,10 @@ also needed for historical regeneration.
 The recorded training setup used 9,024 radiographs and a single H200, with LoRA
 rank 64 and alpha 128. Loss weights were reconstruction L1 = 1.0, PatchGAN =
 0.005, KL = 1e-7, and Stage-2 latent-cycle L1 = 1.0. The VAE was frozen, so
-the recorded KL term did not update trainable parameters. This is provenance,
-not a runnable training configuration. VinDr-SpineXR and BUU-LSPINE data must be
-obtained under their original terms.
+the recorded KL term did not update trainable parameters. The retained
+implementation averaged real and fake discriminator BCE terms, but detached the
+fake discriminator output. The fake BCE term therefore supplied no discriminator
+gradient; discriminator updates received gradients only from the real-image term.
+This describes the retained code, not authenticated execution of every historical
+training job. It is provenance, not a runnable training configuration.
+VinDr-SpineXR and BUU-LSPINE data must be obtained under their original terms.

@@ -85,6 +85,8 @@ them into clinical text.
   variation and generation artifacts limit demographic attribution.
 - The reader pass count, 443/450, applies to a stratified post-QC sample.
   Edited-side detectability was "Cannot tell" for 1,307/1,350 responses.
+  See the [reader-record erratum](reviewer_quickstart.md#reader-record-erratum-2026-09-07)
+  for file-local reviewer labels, stale aggregate fields, and the exclusion list.
 - Findings-first Condition B failed for GPT-5.4 and GLM-4.6V, the two
   gate-eligible models. This does not localize a perceptual mechanism.
 - Historical inference and image generation cannot be recreated exactly from

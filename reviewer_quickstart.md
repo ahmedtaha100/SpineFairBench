@@ -34,6 +34,31 @@ through .gitattributes. Do not rewrite artifact bytes or manifests to hide a mis
 On Windows, extract under a short path such as C:\sfb; deeply nested working
 directories can exceed the legacy 260-character path limit for archive members.
 
+## Reader-record erratum (2026-09-07)
+
+The frozen reader files and their hashes are preserved. Their reviewer labels
+are file-local: all four response fields for the 450 main cases in
+artifacts/validation_public/per_reviewer/reviews_R1_public_2026-04-28.csv match R2 in
+artifacts/validation_public/validation_pair_results_public_2026-04-28.csv; per-reviewer R2
+matches combined R1, and R3 matches R3. This correspondence does not identify
+individual radiologists. The hidden-repeat records match the per-reviewer labels;
+do not apply the combined-file mapping to those repeat records.
+
+The combined file has 1,350 main responses; the per-reviewer exports contain
+1,380 events, including 30 hidden repeats. All combined excluded_final fields
+are blank. Use the separate artifacts/radiologist_exclusion_list.json for the
+seven excluded pair IDs, which match the majority-rule failures. Pooled acceptance
+remains 443/450, and repeat agreements for Q1/Q2/Q3/Q4 remain 30/30, 30/30,
+29/30, and 27/30.
+
+The aggregate artifacts/validation_report_public_final_2026-04-28.json also
+contains stale fields. Its Q2 Gwet AC1 is
+0.9804; the identical Q1/Q2 row-level responses both yield 0.9799846264, rounded
+to 0.9800 (raw agreement 0.9807; Fleiss kappa 0.4902). Its release_scope says
+raw per-pair responses remain private, although this archive includes the
+pseudonymized row-level exports described above. These corrections do not grant
+reader-data redistribution rights.
+
 ## Retained results and accounting
 
 ~~~sh
