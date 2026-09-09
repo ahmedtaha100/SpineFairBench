@@ -396,7 +396,10 @@ def score_submission_payload(
         warnings.append(
             f"Partial submission: {len(missing)} expected pair(s) absent from scope {selected_scope}."
         )
-    comparable = not missing and selected_scope != "toy"
+    # This legacy flag describes pair membership only, never clinical or
+    # inference-protocol comparability. The full QC-passed image collection has
+    # no corresponding retained nine-model panel.
+    comparable = not missing and selected_scope in {"common-core-1000", "all-model-intersection-2166"}
     result = {
         "schema_version": SCORE_SCHEMA_VERSION,
         "scored_at_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
@@ -417,6 +420,8 @@ def score_submission_payload(
             "usable_pairs": len(pair_scores),
             "unique_sources_usable": len(set(source_ids)),
             "comparable_to_panel_scope": comparable,
+            "coverage_complete": not missing,
+            "comparability_basis": "Pair membership only; prompt and provider settings are not verified.",
         },
         "data_quality": pair_quality,
         "primary_endpoints": {

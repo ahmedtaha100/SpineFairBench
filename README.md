@@ -22,6 +22,7 @@ After placing the verified bundle at artifacts/, run from this repository:
 
 ~~~sh
 python reviewer_verify.py checksums
+python reviewer_verify.py release-identity
 python reviewer_verify.py checksums artifacts/SHA256SUMS.txt
 python reviewer_verify.py table2
 python reviewer_verify.py dataset
@@ -35,6 +36,21 @@ artifacts/Results/analysis/common_core_1000_summary.json, including point estima
 usable pairs, and full/partial refusal counts. It reads confidence intervals unless
 --recompute-ci is explicitly supplied. No model calls or image generation occur.
 Use --model gpt-5.4 to check one row and --artifacts PATH for a bundle elsewhere.
+
+[release_manifest.json](release_manifest.json) connects this code package to the
+exact historical artifact revision and seven archive-verified anchor hashes.
+`release-identity` detects a different or replaced artifact manifest;
+`checksums` verifies the files listed in that manifest. The dataset check verifies
+unique pair IDs, the exact QC-passed subset, source/image mappings, PNG membership,
+and recorded file sizes. These checks make no judgment about image demographics.
+
+The [retained follow-up aggregate supplement](supplement/retained_followup_audit_summary.json)
+provides the later target-validity, reconstruction, finding-stratum, transition,
+reader-reliability, source-demographic, and repeated-call evidence used by the
+updated manuscript. It was added separately from the historical archive. Run
+`python reviewer_verify.py followup` to verify its pinned bytes and repeated-call
+accounting/arithmetic. The underlying July audit inputs are not all redistributed;
+this command does not reproduce those audits.
 
 All 18 primary point estimates and all 36 displayed interval bounds in that
 summary match the final paper. Its SHA-256 is
@@ -68,6 +84,11 @@ The five-pair toy fixture yields recommendation change 0.400 [0.000, 0.500]
 and diagnostic consistency 1.000 [1.000, 1.000]. For a full benchmark submission,
 use scope "common-core-1000", 10,000 bootstrap iterations, and omit --allow-partial.
 The default seed 42 matches the manuscript verifier.
+The output's `coverage_complete` field reports membership completeness.
+`comparable_to_panel_scope` is a legacy coverage-only flag, true only for complete
+common-core or all-model-intersection membership; it does not verify prompt,
+provider settings, or clinical comparability. The full `qc-passed` collection has
+no corresponding retained nine-model panel.
 The scorer rejects incomplete coverage and records refusals, source-clustered
 intervals, coverage, and per-pair scores. Full refusals are excluded; partial
 refusals remain. Resolve API errors before submitting reports; do not convert
@@ -108,9 +129,10 @@ python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ~~~
 
-Four small regression tests cover NumPy cluster resampling, frozen-result checks,
-checksum failures, and missing-LPIPS QC. They use synthetic fixtures and make
-no model calls. Optional mitigation analysis requires requirements-analysis.txt;
+Regression tests cover NumPy cluster resampling, frozen-result checks, malformed
+and duplicated records, checksum identity, source/image membership, coverage
+semantics, and missing-LPIPS QC. They use synthetic fixtures and make no model
+calls. Optional mitigation analysis requires requirements-analysis.txt;
 generator dependencies are in requirements-generator.txt.
 
 The metrics/ and evaluation/ modules retain the original endpoint, prompt, and

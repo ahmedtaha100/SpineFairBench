@@ -9,6 +9,12 @@ The historical anonymous bundle is pinned to Hugging Face revision
 fc283334897cc47e07757184f27f00c575537657, archive SHA-256
 7fc99c95abcfad823f71dd10ddbf9e82b6e7fd0b8d808ad3b4d62913efa57380.
 
+The machine-readable [release manifest](release_manifest.json) records the
+archive's 3,734,719,959-byte size and seven anchor hashes verified directly against
+archive members. It also identifies the separately added follow-up supplement.
+Its `code_base_commit` records the historical starting point; `SHA256SUMS.txt`
+identifies the current code package without requiring Git or a network connection.
+
 The historical archive contains synthetic images, source identifiers, report
 text, and pseudonymized reader rows. It is not aggregate-only. Use it under the
 applicable dataset and reader-data permissions. Source radiographs and masks are
@@ -25,6 +31,7 @@ hf download anon-submission7979/spinefairbench-artifacts spinefairbench_artifact
 python reviewer_verify.py checksums spinefairbench_artifacts.tar.gz.sha256
 tar -xzf spinefairbench_artifacts.tar.gz
 python reviewer_verify.py checksums
+python reviewer_verify.py release-identity
 python reviewer_verify.py checksums artifacts/SHA256SUMS.txt
 python reviewer_verify.py checksums artifacts/radiologist_validation_SHA256SUMS.txt
 ~~~
@@ -33,6 +40,12 @@ Each checksum command must exit successfully. Repository text uses LF endings
 through .gitattributes. Do not rewrite artifact bytes or manifests to hide a mismatch.
 On Windows, extract under a short path such as C:\sfb; deeply nested working
 directories can exceed the legacy 260-character path limit for archive members.
+
+`release-identity` must report seven matching anchors and 11 preserved historical
+prompt entries. Artifact checksums must report 91,844 files, and the separate
+reader checksum manifest 12 files. The identity check pins the manifests; the
+checksum commands verify their listed bytes. Newly created files outside those
+manifests are not certified by the checksum command.
 
 ## Reader-record erratum (2026-09-07)
 
@@ -85,6 +98,13 @@ and no source PNGs. Reader checks expect 443/450 accepted pairs and 1,307/1,350
 "Cannot tell" responses. Stage-1 parsing admits GPT-5.4 and GLM-4.6V at 193/200
 each; both fail the Condition B joint rule.
 
+Dataset verification also rejects duplicate pair/source IDs, inconsistent QC
+selection, source/image mapping errors, replaced PNG membership, and incorrect
+image sizes. Retained-report verification rejects duplicate or orphan reports,
+unresolved errors, missing report text, and contradictory source-cluster IDs.
+Full refusals remain valid retained responses and receive the frozen exclusion
+policy. Baseline-only models are still verified in their appropriate panel.
+
 Optional interval regeneration from saved reports:
 
 ~~~sh
@@ -96,6 +116,37 @@ This uses sorted source clusters, NumPy PCG64, 10,000 resamples, and seed 42
 independently for each endpoint. The retained July audit identified this RNG
 and seed as matching the frozen intervals. The command checks intervals to
 absolute tolerance 1e-12 and rejects other settings for frozen-record verification.
+
+## Later aggregate evidence in the updated manuscript
+
+~~~sh
+python reviewer_verify.py followup
+~~~
+
+[supplement/retained_followup_audit_summary.json](supplement/retained_followup_audit_summary.json)
+is a byte-identical extract of retained July audits, separately packaged in
+September. It contains aggregate target-estimator and reconstruction results,
+finding strata, recommendation transitions, reader reliability, source demographics,
+and repeated-call variability. It does not contain individual reader identities
+or patient-level reports. Input hashes identify the retained sources; they do not
+make unavailable inputs publicly accessible.
+
+The command verifies the supplement's pinned hash, the nine-model set, repeated-call
+source accounting, and the stored `T-F` and `(T-F)/(1-F)` arithmetic. It reports
+919 eligible sources for Gemma and 1,000 for each other model. It does not generate
+images, call VLMs, bootstrap intervals, or reproduce the underlying July audits.
+The primary table remains pair-weighted; these post-hoc repeated-call summaries
+weight sources equally and have 18 unadjusted raw-excess intervals.
+
+| Manuscript evidence | Retained location or command | What verification establishes |
+|---|---|---|
+| Primary nine-model endpoints | `table2`; frozen `common_core_1000_summary.json` | Saved-report lexical scores, denominators and refusal accounting |
+| Metric-construction sensitivity | `gap-sensitivity` | Binary/graded comparison using the same saved reports |
+| Repeated-call variability | `followup`; supplement `repeated_calls` | Aggregate identity and arithmetic, not new inference |
+| Source cohorts, finding strata, transitions | Supplement sections of the same names | Accessible retained aggregate evidence with input hashes |
+| Target estimator and reconstruction audit | Supplement `target_validity` and `reconstruction` | Retained results and their limitations, not demographic or causal validation |
+| Mitigation | `stage1-confidence` and `mitigation` | Saved parse-gate sample, table arithmetic and binding-rule outcome |
+| Reader study | `radiologist` and the erratum above | Retained rows under documented file-local labels |
 
 ## Optional scorer inspection
 

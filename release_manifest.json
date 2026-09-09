@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "release_id": "retained-evidence-2026-09-09",
+  "created_at_utc": "2026-09-09T22:20:22+00:00",
+  "code_base_commit": "91869bebf549dd6b35f0549fcea2bf4b58fe9baf",
+  "code_identity": "SHA256SUMS.txt identifies this code package; code_base_commit is its historical starting point, not a claim about the current checkout HEAD.",
+  "artifact_archive": {
+    "repository": "anon-submission7979/spinefairbench-artifacts",
+    "revision": "fc283334897cc47e07757184f27f00c575537657",
+    "filename": "spinefairbench_artifacts.tar.gz",
+    "size_bytes": 3734719959,
+    "sha256": "7fc99c95abcfad823f71dd10ddbf9e82b6e7fd0b8d808ad3b4d62913efa57380",
+    "extracted_root": "artifacts",
+    "manifest_entries": 91844
+  },
+  "frozen_prompt_registry": "artifacts/freeze_runs/2026-04-09/canonical_definitions.json",
+  "artifact_anchors": {
+    "SHA256SUMS.txt": "886f9669a3a474597db51702aafd68bb40f236340323ffb003d8a22b690e3cbe",
+    "radiologist_validation_SHA256SUMS.txt": "5efaf23980f1938fb831b5671e35566820a5bf81210fb08ae47e0af9d98f015d",
+    "dataset/release_manifest.json": "6261fab46b1ef3e60d4fe54414fbcc062575c48d9c4278fcebb4f201233cf465",
+    "artifacts/Results/analysis/common_core_1000_summary.json": "e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5",
+    "artifacts/freeze_runs/2026-04-09/canonical_definitions.json": "650c476a40aa3c8713071657ffb5ecf754518febc75982e88169e1ddf48cb38b",
+    "artifacts/Results/final_inputs/panels/full_pipeline_retained/panel_manifest.json": "519ba039863a94dde12dbb860509ab5679c76872ca49debb1d64af11cb6e599a",
+    "artifacts/Results/final_inputs/panels/baseline_only_retained/panel_manifest.json": "a92731f661b808adfe42d1f16fe7ce6df6075b380a58c76f3f68bc4ccfc491fb"
+  },
+  "verification_scopes": {
+    "release-identity": "Pinned anchor hashes and preserved historical prompt entries; not all file bytes.",
+    "checksums": "Every file named by the supplied checksum manifest; not unlisted files or scientific validity.",
+    "dataset": "Unique IDs, QC-passed selection, source/image mappings, PNG membership and sizes; does not rerun QC or validate demographics.",
+    "table2": "Nine retained models, lexical endpoints, usable/refusal counts from saved reports; confidence intervals are read unless --recompute-ci is supplied.",
+    "gap-sensitivity": "Metric sensitivity from saved reports; not clinical adjudication.",
+    "stage1-confidence": "Saved diagnosis-parse sample and eligibility decision, not clinician accuracy.",
+    "mitigation": "Published table accounting and joint-rule outcome; not full raw-trace reanalysis.",
+    "radiologist": "Retained reader rows and documented file-local mapping; not new reader validation.",
+    "followup": "Pinned later aggregate summary and repeated-call accounting/arithmetic; does not rerun or reproduce underlying July audits."
+  },
+  "historical_limits": [
+    "Source radiographs and production masks are not redistributed.",
+    "Public generator adapter is not the historical production generator.",
+    "Historical provider snapshots and complete training membership are not established by this package.",
+    "Checksum identity does not establish clinical correctness, demographic attainment, licensing permission, or causal attribution."
+  ],
+  "supplemental_analysis_scope": "Later ML4H follow-up analyses are separate from this historical archive and require their own identified artifacts.",
+  "supplemental_artifacts": {
+    "retained_followup_audit": {
+      "path": "supplement/retained_followup_audit_summary.json",
+      "sha256": "9b15478fa595a9101bbdeecff80378412c622df7ffa58977041f4ffe3022fe4b",
+      "size_bytes": 82436,
+      "source_repository": "ahmedtaha100/SpineFairBench3",
+      "source_commit": "46542834374a1d255db3b3887aca3f4411894ee2",
+      "source_path": "Manuscript/followup_audit_summary.json",
+      "scope": "Byte-identical aggregate extract of retained July audits; added separately in September, not part of the historical archive. Underlying raw follow-up assets are not all supplied."
+    }
+  }
+}

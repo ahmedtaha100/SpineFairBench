@@ -4,10 +4,11 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 import statistics
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 CODE_ROOT = Path(__file__).resolve().parent
@@ -53,6 +54,42 @@ def _required(root: Path, rel: str, *, kind: str = "artifact") -> Path:
     if not path.exists():
         raise SystemExit(f"Missing required {kind}: {rel}")
     return path
+
+
+def _contained_path(root: Path, name: str) -> Path:
+    """Resolve a portable release path without accepting aliases or escapes."""
+    rel = PurePosixPath(name)
+    if (not name or "\\" in name or ":" in name or rel.is_absolute()
+            or ".." in rel.parts or str(rel) != name):
+        raise SystemExit(f"Invalid release-relative path: {name!r}")
+    path = root / name
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise SystemExit(f"Release path escapes its root: {name!r}")
+    return path
+
+
+def _unique_rows(rows: Any, key: str, label: str) -> dict[str, dict[str, Any]]:
+    if not isinstance(rows, list):
+        raise SystemExit(f"{label} must contain a list")
+    indexed = {}
+    for position, row in enumerate(rows, 1):
+        if not isinstance(row, dict) or not isinstance(row.get(key), str) or not row[key]:
+            raise SystemExit(f"Invalid {key} in {label} row {position}")
+        if row[key] in indexed:
+            raise SystemExit(f"Duplicate {key} in {label}: {row[key]}")
+        indexed[row[key]] = row
+    return indexed
+
+
+def _jsonl_rows(path: Path) -> list[dict[str, Any]]:
+    rows = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid JSON in {path.name} line {line_number}: {exc.msg}") from exc
+        rows.append(row)
+    return rows
 
 
 def _panel_paths(root: Path, panel: str) -> tuple[Path, Path, Path]:
@@ -117,7 +154,7 @@ def command_inspect(args: argparse.Namespace) -> None:
     all9_manifest = _load_json(root / "artifacts" / "Results" / "final_inputs" / "all_model_intersection_2166_manifest.json")
     panel_freeze = _load_json(root / "artifacts" / "Results" / "final_inputs" / "final_panel_freeze_manifest.json")
 
-    print("Submission package inspection: OK")
+    print("Package inventory: required files present (use identity, checksum, and result checks for content verification)")
     print("Artifact root:", root)
     print("Frozen manifests: present")
     print("Common-core source manifest: present")
@@ -154,7 +191,44 @@ def command_dataset(args: argparse.Namespace) -> None:
     expected_passed = manifest["pair_manifests"]["qc_passed_pair_rows"]
     expected_qc_rows = manifest["pair_manifests"]["attempted_qc_rows"]
 
-    print("Dataset release inspection: OK")
+    passed = _unique_rows(_jsonl_rows(passed_path), "pair_id", "QC-passed manifest")
+    attempted = _unique_rows(_jsonl_rows(qc_path), "pair_id", "QC metadata")
+    targets = {"young_female", "young_male", "elderly_female", "elderly_male"}
+    for pair_id, row in attempted.items():
+        if (row.get("edit_label") not in targets or not isinstance(row.get("source_id"), str)
+                or pair_id != f"{row['source_id']}__{row['edit_label']}"
+                or type(row.get("passed_qc")) is not bool):
+            raise SystemExit(f"Invalid QC pair identity or pass flag: {pair_id}")
+    if passed != {key: row for key, row in attempted.items() if row["passed_qc"]}:
+        raise SystemExit("QC-passed manifest does not equal the passed rows in QC metadata")
+
+    expected_images: set[Path] = set()
+    source_images: dict[str, dict[str, str]] = {}
+    for pair_id, row in passed.items():
+        image_name = row.get("counterfactual_image_path")
+        if not isinstance(image_name, str):
+            raise SystemExit(f"Missing released image path: {pair_id}")
+        expected_name = f"dataset/counterfactual_images/{row['source_id']}/{row['edit_label']}.png"
+        if image_name != expected_name:
+            raise SystemExit(f"Image path does not match pair identity: {pair_id}")
+        image = _contained_path(root, image_name)
+        if not image.is_file() or image.stat().st_size != row.get("counterfactual_image_size_bytes"):
+            raise SystemExit(f"Released image missing or size mismatch: {image_name}")
+        expected_images.add(image)
+        source_images.setdefault(row["source_id"], {})[row["edit_label"]] = image_name
+    actual_images = set((root / "dataset").rglob("*.png"))
+    if actual_images != expected_images:
+        raise SystemExit("Released PNG membership differs from QC-passed manifest")
+    for rel in ("dataset/pairs.json", "dataset/source_metadata.json"):
+        sources = _unique_rows(_load_json(_required(root, rel)), "source_id", rel)
+        if set(sources) != set(source_images):
+            raise SystemExit(f"Source membership differs from QC-passed manifest: {rel}")
+        for source_id, row in sources.items():
+            if (row.get("counterfactual_images") != source_images[source_id]
+                    or sorted(row.get("qc_passed_counterfactuals", [])) != sorted(source_images[source_id])):
+                raise SystemExit(f"Source image mapping mismatch: {rel}: {source_id}")
+    if len(source_images) != manifest["pair_manifests"]["source_level_rows"]:
+        raise SystemExit("Source count differs from release manifest")
     print("Counterfactual image root:", image_root.relative_to(root))
     print("Released QC-passed PNGs:", included_png_count)
     print("QC-passed pair manifest rows:", passed_rows)
@@ -170,6 +244,7 @@ def command_dataset(args: argparse.Namespace) -> None:
         raise SystemExit(f"Unexpected QC metadata row count: {qc_rows} != {expected_qc_rows}")
     if source_png_count != 0:
         raise SystemExit("Raw source PNG files are present in the public dataset tree")
+    print("Dataset release inspection: OK (unique pairs, QC membership, source mappings, PNG paths and sizes)")
 
 
 def _panel_for_model(root: Path, model: str) -> str:
@@ -200,15 +275,38 @@ def _paired_records(root: Path, model: str) -> tuple[dict[str, dict[str, Any]], 
     sources: dict[str, dict[str, Any]] = {}
     generated: list[dict[str, Any]] = []
     for row in rows:
-        if row.get("model") != model or row.get("error"):
+        if not isinstance(row, dict):
+            raise SystemExit("evaluation_results.json contains a non-object row")
+        if row.get("model") != model:
             continue
+        if row.get("error"):
+            raise SystemExit(f"Unresolved evaluation error in retained export: {model}: {row.get('pair_id')}")
         pair_id = row.get("pair_id")
         if not isinstance(pair_id, str) or not pair_id:
-            continue
-        if row.get("image_role") == "source":
+            raise SystemExit(f"Missing pair_id in retained export: {model}")
+        if not isinstance(row.get("response"), str) or not row["response"].strip():
+            raise SystemExit(f"Missing report text in retained export: {model}: {pair_id}")
+        role = row.get("image_role")
+        if role == "source":
+            if pair_id in sources:
+                raise SystemExit(f"Duplicate source report: {model}: {pair_id}")
             sources[pair_id] = row
-        elif row.get("image_role") == "generated":
+        elif role == "generated":
             generated.append(row)
+        else:
+            raise SystemExit(f"Unknown report role in retained export: {model}: {pair_id}: {role!r}")
+    generated_index = _unique_rows(generated, "pair_id", f"{model} generated reports")
+    if set(sources) != set(generated_index):
+        raise SystemExit(f"Unpaired retained reports: {model}")
+    for pair_id, src in sources.items():
+        gen = generated_index[pair_id]
+        source_id = _source_id_for_record(src, gen)
+        for row in (src, gen):
+            declared_source = row.get("pair_source_id") or row.get("source_id")
+            declarations = [row[key] for key in ("pair_source_id", "source_id") if row.get(key)]
+            if (declared_source != source_id or any(value != source_id for value in declarations)
+                    or not pair_id.startswith(source_id + "__")):
+                raise SystemExit(f"Inconsistent source cluster identity: {model}: {pair_id}")
     return sources, generated
 
 
@@ -412,21 +510,85 @@ def command_table2(args: argparse.Namespace) -> None:
 def command_checksums(args: argparse.Namespace) -> None:
     manifest = Path(args.manifest).resolve()
     checked = 0
-    for line in manifest.read_text(encoding="utf-8").splitlines():
+    seen: set[str] = set()
+    for line_number, line in enumerate(manifest.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
-        expected, name = line.split(maxsplit=1)
-        path = manifest.parent / name.lstrip("*")
+        entry = re.fullmatch(r"([0-9a-fA-F]{64}) [ *](.+)", line)
+        if entry is None:
+            raise SystemExit(f"Malformed SHA-256 manifest entry at line {line_number}")
+        expected, name = entry.groups()
+        path = _contained_path(manifest.parent, name)
+        if name.casefold() in seen:
+            raise SystemExit(f"Duplicate checksum path: {name}")
+        seen.add(name.casefold())
         if not path.is_file():
             raise SystemExit(f"Checksum file missing: {name}")
         with path.open("rb") as handle:
             actual = hashlib.file_digest(handle, "sha256").hexdigest()
-        if actual != expected:
+        if actual != expected.lower():
             raise SystemExit(f"Checksum mismatch: {name}")
         checked += 1
     if not checked:
         raise SystemExit("Checksum manifest is empty")
     print(f"Checksum verification: {checked} files OK")
+
+
+def command_release_identity(args: argparse.Namespace) -> None:
+    root = _artifact_root(args)
+    release = _load_json(CODE_ROOT / "release_manifest.json")
+    if release.get("schema_version") != "1.0" or not release.get("artifact_anchors"):
+        raise SystemExit("Unsupported or empty release identity manifest")
+    for name, expected in release["artifact_anchors"].items():
+        path = _contained_path(root, name)
+        if not path.is_file():
+            raise SystemExit(f"Release identity file missing: {name}")
+        with path.open("rb") as handle:
+            actual = hashlib.file_digest(handle, "sha256").hexdigest()
+        if actual != expected:
+            raise SystemExit(f"Pinned release identity mismatch: {name}")
+    frozen = _load_json(root / release["frozen_prompt_registry"])["prompt_registry"]
+    public = _load_json(CODE_ROOT / "prompts/canonical_definitions.json")["prompt_registry"]
+    for key, value in frozen.items():
+        if public.get(key) != value:
+            raise SystemExit(f"Frozen prompt differs from public code: {key}")
+    print(f"Pinned retained-release identity: OK ({len(release['artifact_anchors'])} anchors)")
+    print("Archive revision:", release["artifact_archive"]["revision"])
+    print("Frozen prompt registry entries preserved:", len(frozen))
+    print("Coverage: artifact identity and prompt preservation; full file integrity requires checksums.")
+
+
+def command_followup(args: argparse.Namespace) -> None:
+    """Read the retained aggregate supplement; never rerun its experiments."""
+    release = _load_json(CODE_ROOT / "release_manifest.json")
+    metadata = release["supplemental_artifacts"]["retained_followup_audit"]
+    path = _contained_path(CODE_ROOT, metadata["path"])
+    if hashlib.sha256(path.read_bytes()).hexdigest() != metadata["sha256"]:
+        raise SystemExit("Retained follow-up supplement hash mismatch")
+    summary = _load_json(path)
+    repeated = summary["repeated_calls"]
+    if set(repeated["models"]) != set(RETAINED_TABLE2_MODELS):
+        raise SystemExit("Retained follow-up model membership mismatch")
+    print("Retained follow-up aggregate identity and arithmetic:")
+    print(summary["scope"])
+    for model, row in sorted(repeated["models"].items()):
+        total = (row["n_sources"] + row["dropped_no_usable_edited_comparison"]
+                 + row["dropped_fewer_than_two_usable_source_reports"])
+        if total != repeated["common_core_sources"]:
+            raise SystemExit(f"Repeated-call source accounting mismatch: {model}")
+        for endpoint in ("recommendation", "diagnostic"):
+            item = row[endpoint]
+            values = [item[key] for key in ("T", "F", "excess", "normalized_excess")] + item["ci95"]
+            if (not all(type(value) in (int, float) and math.isfinite(value) for value in values)
+                    or not 0 <= item["T"] <= 1 or not 0 <= item["F"] < 1
+                    or item["ci95"][0] > item["ci95"][1]
+                    or abs(item["excess"] - (item["T"] - item["F"])) > 1e-12
+                    or abs(item["normalized_excess"] - item["excess"] / (1 - item["F"])) > 1e-12):
+                raise SystemExit(f"Repeated-call aggregate arithmetic mismatch: {model}: {endpoint}")
+        print(model, "sources:", row["n_sources"], "recommendation/diagnostic excess:",
+              f"{row['recommendation']['excess']:.6f}", f"{row['diagnostic']['excess']:.6f}")
+    print("Retained follow-up aggregate checks: OK")
+    print("Coverage: pinned aggregate bytes and repeated-call accounting/arithmetic; not raw-audit reproduction or new validation.")
 
 
 def command_diagnostic_scoring(args: argparse.Namespace) -> None:
@@ -677,7 +839,10 @@ def _mitigation_row(rows: list[dict[str, str]], model: str, condition: str) -> d
 
 def _cell_float(row: dict[str, str], field: str) -> float:
     try:
-        return float(row[field])
+        value = float(row[field])
+        if not math.isfinite(value):
+            raise ValueError("non-finite value")
+        return value
     except (KeyError, TypeError, ValueError) as exc:
         raise SystemExit(f"Invalid mitigation-table value for {field}: {row.get(field)!r}") from exc
 
@@ -697,6 +862,12 @@ def command_mitigation(args: argparse.Namespace) -> None:
         condition_b = _mitigation_row(rows, model, "condition_b")
         delta_rec = _cell_float(condition_b, "delta_rec")
         delta_diag = _cell_float(condition_b, "delta_diag")
+        if (condition_a.get("n_pairs") != condition_b.get("n_pairs")
+                or abs(delta_rec - (_cell_float(condition_b, "rec_change") - _cell_float(condition_a, "rec_change"))) > 1e-12
+                or abs(delta_diag - (_cell_float(condition_b, "diag_consistency") - _cell_float(condition_a, "diag_consistency"))) > 1e-12):
+            raise SystemExit(f"Mitigation table accounting mismatch for {model}")
+        if condition_b.get("b_rule_pass", "").strip().lower() not in {"true", "false"}:
+            raise SystemExit(f"Missing or invalid mitigation binding-rule flag for {model}")
         b_rule_pass = condition_b.get("b_rule_pass", "").strip().lower() == "true"
         if b_rule_pass or delta_rec <= 0 or delta_diag >= -0.05:
             raise SystemExit(f"Unexpected mitigation binding-rule result for {model}")
@@ -742,6 +913,13 @@ def main() -> int:
     checksums = sub.add_parser("checksums", help="Verify SHA-256 files relative to their manifest.")
     checksums.add_argument("manifest", nargs="?", default=str(CODE_ROOT / "SHA256SUMS.txt"))
     checksums.set_defaults(func=command_checksums)
+
+    identity = sub.add_parser("release-identity", help="Verify pinned archive anchors and frozen prompts.")
+    _add_artifact_arg(identity)
+    identity.set_defaults(func=command_release_identity)
+
+    followup = sub.add_parser("followup", help="Inspect pinned later aggregate audits and repeated-call arithmetic.")
+    followup.set_defaults(func=command_followup)
 
     inspect = sub.add_parser("inspect")
     _add_artifact_arg(inspect)
