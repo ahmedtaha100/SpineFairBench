@@ -4,3 +4,5 @@ __pycache__/
 artifacts/
 spinefairbench_artifacts.tar.gz
 spinefairbench_artifacts.tar.gz.sha256
+generator_assets/
+generator_output/

@@ -1,1 +1,3 @@
-# reviewer_verify.py and the modules it imports use the Python standard library only. No installs needed for the reviewer verification path.
+# Only required for new-submission scoring or optional CI recomputation.
+# Frozen point-estimate, count, and checksum verification is stdlib-only.
+numpy==2.4.6

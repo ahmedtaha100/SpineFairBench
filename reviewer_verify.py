@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import statistics
@@ -10,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 CODE_ROOT = Path(__file__).resolve().parent
-DEFAULT_ARTIFACT_ROOT = CODE_ROOT.parent / "artifacts"
+DEFAULT_ARTIFACT_ROOT = CODE_ROOT / "artifacts"
 if str(CODE_ROOT) not in sys.path:
     sys.path.insert(0, str(CODE_ROOT))
 
@@ -43,7 +44,7 @@ def _count_lines(path: Path) -> int:
 
 
 def _artifact_root(args: argparse.Namespace) -> Path:
-    value = getattr(args, "artifacts", None) or getattr(args, "root", None)
+    value = getattr(args, "artifacts", None)
     return Path(value or DEFAULT_ARTIFACT_ROOT).resolve()
 
 
@@ -98,11 +99,6 @@ def command_inspect(args: argparse.Namespace) -> None:
     ]
     for rel in required_artifacts:
         _required(root, rel)
-    if not (
-        (root / "artifacts/Results/analysis/mitigation_stage1_confidence_sample_manifest.json").exists()
-        or (root / "artifacts/Results/analysis/mitigation_stage1_trace_manifest.json").exists()
-    ):
-        raise SystemExit("Missing required artifact: Stage-1 confidence sample manifest or trace manifest")
     for panel in ("full_pipeline_retained", "baseline_only_retained", "full_pipeline_mitigation_retained"):
         base = root / "artifacts" / "Results" / "final_inputs" / "panels" / panel
         _required(root, str(base.relative_to(root) / "panel_manifest.json"))
@@ -255,7 +251,7 @@ def _endpoint_metrics(root: Path, model: str) -> dict[str, Any]:
     full_refusal_pairs = 0
     partial_refusal_pairs = 0
 
-    for gen in generated:
+    for gen in sorted(generated, key=lambda row: row["pair_id"]):
         src = sources.get(gen["pair_id"])
         if not src:
             continue
@@ -323,6 +319,10 @@ def command_parse_sample(args: argparse.Namespace) -> None:
 
 
 def command_table2(args: argparse.Namespace) -> None:
+    if args.model == "all":
+        for model in RETAINED_TABLE2_MODELS:
+            command_table2(argparse.Namespace(**{**vars(args), "model": model}))
+        return
     root = _artifact_root(args)
     metrics = _endpoint_metrics(root, args.model)
     recommendation_matches = metrics["recommendation_matches"]
@@ -337,7 +337,7 @@ def command_table2(args: argparse.Namespace) -> None:
     panel = "full" if args.model in summary["panels"]["full"]["models"] else "baseline"
     frozen_model = summary["panels"][panel]["models"][args.model]
     frozen = frozen_model["primary_secondary_stats"]
-    frozen_quality = frozen_model.get("data_quality", {})
+    quality = frozen_model["data_quality"]
     frozen_rec_change = 1.0 - frozen["recommendation"]["agreement_rate"]
     frozen_diag = frozen["diagnostic_label"]["mean"]
     rec_ci = frozen["recommendation"]["bootstrap_ci"]
@@ -348,8 +348,7 @@ def command_table2(args: argparse.Namespace) -> None:
     print("Usable pairs:", len(recommendation_matches))
     print("Full-refusal pairs excluded:", metrics["full_refusal_pairs"])
     print("Partial-refusal pairs included:", metrics["partial_refusal_pairs"])
-    if "pair_usable" in frozen_quality:
-        print("Frozen summary usable pairs:", frozen_quality["pair_usable"])
+    print("Frozen summary usable pairs:", quality["pair_usable"])
     print("Recomputed recommendation change:", f"{rec_change:.6f}", f"(rounded: {rec_change:.3f})")
     print("Frozen summary recommendation change:", f"{frozen_rec_change:.6f}", f"(rounded: {frozen_rec_change:.3f})")
     print(
@@ -363,6 +362,8 @@ def command_table2(args: argparse.Namespace) -> None:
         f"[{diag_ci['lower']:.3f}, {diag_ci['upper']:.3f}]",
     )
     if args.recompute_ci:
+        if args.bootstrap_iterations != summary["source_clustered_bootstrap"]["iterations"] or args.seed != 42:
+            raise SystemExit("Frozen CI verification requires 10000 resamples and seed 42")
         recomputed_rec_ci = source_clustered_bootstrap_ci(
             metrics["recommendation_changed"],
             metrics["source_ids"],
@@ -385,16 +386,47 @@ def command_table2(args: argparse.Namespace) -> None:
         )
         print(
             "CI recomputation settings:",
-            f"source_clustered_percentile iterations={args.bootstrap_iterations} seed={args.seed}",
+            f"NumPy_PCG64 iterations={args.bootstrap_iterations} seed={args.seed}",
         )
+        for label, actual, expected in (
+            ("recommendation", recomputed_rec_ci, rec_change_ci),
+            ("diagnosis", recomputed_diag_ci, (diag_ci["lower"], diag_ci["upper"])),
+        ):
+            if any(abs(a - b) > 1e-12 for a, b in zip(actual, expected)):
+                raise SystemExit(f"Recomputed {label} CI does not match frozen summary")
     else:
         print("CI mode: frozen summary read; pass --recompute-ci to run source-clustered bootstrap.")
-    if "pair_usable" in frozen_quality and len(recommendation_matches) != int(frozen_quality["pair_usable"]):
+    if len(recommendation_matches) != quality["pair_usable"]:
         raise SystemExit("Recomputed usable-pair count does not match frozen summary")
+    for field in ("full_refusals", "partial_refusals"):
+        metric = "full_refusal_pairs" if field == "full_refusals" else "partial_refusal_pairs"
+        if metrics[metric] != quality["pair_" + field]:
+            raise SystemExit(f"Recomputed {field} does not match frozen summary")
     if abs(rec_change - frozen_rec_change) > 1e-12:
         raise SystemExit("Recomputed recommendation change does not match frozen summary")
     if abs(diag_consistency - frozen_diag) > 1e-12:
         raise SystemExit("Recomputed diagnostic consistency does not match frozen summary")
+    print("Frozen summary verification: OK")
+
+
+def command_checksums(args: argparse.Namespace) -> None:
+    manifest = Path(args.manifest).resolve()
+    checked = 0
+    for line in manifest.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        expected, name = line.split(maxsplit=1)
+        path = manifest.parent / name.lstrip("*")
+        if not path.is_file():
+            raise SystemExit(f"Checksum file missing: {name}")
+        with path.open("rb") as handle:
+            actual = hashlib.file_digest(handle, "sha256").hexdigest()
+        if actual != expected:
+            raise SystemExit(f"Checksum mismatch: {name}")
+        checked += 1
+    if not checked:
+        raise SystemExit("Checksum manifest is empty")
+    print(f"Checksum verification: {checked} files OK")
 
 
 def command_diagnostic_scoring(args: argparse.Namespace) -> None:
@@ -404,10 +436,6 @@ def command_diagnostic_scoring(args: argparse.Namespace) -> None:
     print("Released diagnostic-label registry size:", len(PATHOLOGY_SYNONYMS))
     print("Released diagnostic-label categories:", ", ".join(sorted(PATHOLOGY_SYNONYMS)))
     print("Both-empty diagnostic-label Jaccard:", f"{compute_jaccard(set(), set()):.1f}")
-    print(
-        "Archival tokenized helper:",
-        "spinefairbench.analysis.endpoints._extract_diagnosis_tokens is not used for frozen Table 2.",
-    )
 
 
 def command_gap_sensitivity(args: argparse.Namespace) -> None:
@@ -705,12 +733,15 @@ def command_mitigation(args: argparse.Namespace) -> None:
 
 def _add_artifact_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--artifacts", default=str(DEFAULT_ARTIFACT_ROOT), help="Path to the companion artifacts folder.")
-    parser.add_argument("--root", default=None, help=argparse.SUPPRESS)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Reviewer verification helpers for SpineFairBench submission artifacts.")
     sub = parser.add_subparsers(required=True)
+
+    checksums = sub.add_parser("checksums", help="Verify SHA-256 files relative to their manifest.")
+    checksums.add_argument("manifest", nargs="?", default=str(CODE_ROOT / "SHA256SUMS.txt"))
+    checksums.set_defaults(func=command_checksums)
 
     inspect = sub.add_parser("inspect")
     _add_artifact_arg(inspect)
@@ -727,19 +758,11 @@ def main() -> int:
 
     table2 = sub.add_parser("table2")
     _add_artifact_arg(table2)
-    table2.add_argument("--model", default="gpt-5.4")
+    table2.add_argument("--model", default="all", choices=(*RETAINED_TABLE2_MODELS, "all"))
     table2.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
     table2.add_argument("--bootstrap-iterations", type=int, default=10000)
     table2.add_argument("--seed", type=int, default=42)
     table2.set_defaults(func=command_table2)
-
-    table3 = sub.add_parser("table3", help="Backward-compatible alias for table2.")
-    _add_artifact_arg(table3)
-    table3.add_argument("--model", default="gpt-5.4")
-    table3.add_argument("--recompute-ci", action="store_true", help="Regenerate source-clustered bootstrap CIs from released per-pair outputs.")
-    table3.add_argument("--bootstrap-iterations", type=int, default=10000)
-    table3.add_argument("--seed", type=int, default=42)
-    table3.set_defaults(func=command_table2)
 
     diagnostic = sub.add_parser("diagnostic-scoring", help="Print the frozen Table 2 diagnostic-label scoring path.")
     diagnostic.set_defaults(func=command_diagnostic_scoring)
