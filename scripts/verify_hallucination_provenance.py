@@ -33,6 +33,11 @@ ARTIFACT_HASHES = {
 }
 
 
+def _load_json(path: Path):
+    # JSON bytes carry their Unicode encoding independently of the OS locale.
+    return json.loads(path.read_bytes())
+
+
 def verify_hashes(root: Path, expected: dict[str, str]) -> None:
     for relative, digest in expected.items():
         path = root / relative
@@ -44,13 +49,18 @@ def verify_hashes(root: Path, expected: dict[str, str]) -> None:
             raise ValueError(f"SHA-256 mismatch: {relative}")
 
 
-def load_verified_module(name: str, path: Path):
+def load_verified_module(name: str, path: Path, expected_sha256: str):
+    source_bytes = path.read_bytes()
+    if hashlib.sha256(source_bytes).hexdigest() != expected_sha256:
+        raise ValueError(f"SHA-256 mismatch: {path.name}")
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise ValueError(f"Cannot load verified module: {path.name}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    spec.loader.exec_module(module)
+    # A source loader can execute a timestamp-valid .pyc without reading the
+    # verified source. Compile these exact bytes instead of consulting caches.
+    exec(compile(source_bytes, str(path), "exec"), module.__dict__)
     return module
 
 
@@ -58,16 +68,16 @@ def reconstruct(artifacts: Path, source: Path) -> dict:
     # Verify every executable source and scientific input before interpretation.
     verify_hashes(source, SOURCE_HASHES)
     verify_hashes(artifacts, ARTIFACT_HASHES)
-    label = load_verified_module("_sfb_recorded_labels", source / "metrics/diagnostic_label.py")
-    refusal = load_verified_module("_sfb_recorded_refusal", source / "metrics/refusal_detector.py")
-    syntax = ast.parse((source / "data/annotations.py").read_text())
+    label = load_verified_module("_sfb_recorded_labels", source / "metrics/diagnostic_label.py", SOURCE_HASHES["metrics/diagnostic_label.py"])
+    refusal = load_verified_module("_sfb_recorded_refusal", source / "metrics/refusal_detector.py", SOURCE_HASHES["metrics/refusal_detector.py"])
+    syntax = ast.parse((source / "data/annotations.py").read_bytes())
     categories = next(
         ast.literal_eval(node.value)
         for node in syntax.body
         if isinstance(node, ast.Assign)
         and any(isinstance(target, ast.Name) and target.id == "ABNORMALITY_CATEGORIES" for target in node.targets)
     )
-    summary = json.loads((artifacts / "Results/analysis/common_core_1000_summary.json").read_text())
+    summary = _load_json(artifacts / "Results/analysis/common_core_1000_summary.json")
 
     @lru_cache(maxsize=100000)
     def predictions(text: str) -> frozenset[str]:
@@ -95,8 +105,8 @@ def reconstruct(artifacts: Path, source: Path) -> dict:
     }
     for panel, short_name in [("full_pipeline_retained", "full"), ("baseline_only_retained", "baseline")]:
         panel_path = artifacts / "Results/final_inputs/panels" / panel
-        rows = json.loads((panel_path / "evaluation_results.json").read_text())
-        pairs = json.loads((panel_path / "pairs.json").read_text())
+        rows = _load_json(panel_path / "evaluation_results.json")
+        pairs = _load_json(panel_path / "pairs.json")
         labels_by_source = {
             row["source_id"]: {categories[i] for i in row["pathology_labels"] if i in range(len(categories))} - {"No finding"}
             for row in pairs if "pathology_labels" in row
@@ -184,7 +194,7 @@ def main() -> int:
         result = reconstruct(artifact_root, args.recorded_source_root)
         encoded = json.dumps(result, indent=2) + "\n"
         if args.output:
-            args.output.write_text(encoded)
+            args.output.write_text(encoded, encoding="utf-8")
         print(encoded, end="")
         return 0 if result["verified"] else 1
     except (OSError, ValueError, KeyError, StopIteration) as exc:

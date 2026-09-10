@@ -1,0 +1,142 @@
+{
+  "checkpoint_expected_sha256": "bc3f71631f07f3d0ca645808b0622f28da2c863b21622cab0ed65e8e44f329ff",
+  "container_pickle_member": "epoch_2/data.pkl",
+  "pickle_bytes": 445258,
+  "pickle_sha256": "14bc70ebbbac1ffd37a8025fe1c7ff2bfc0c15d3f54bbacfccbb0887eb8a2e00",
+  "method": "Read ZIP member and statically decode pickle opcodes with pickletools.genops. Never unpickled, never invoked GLOBAL/REDUCE/BUILD, never loaded tensors or model.",
+  "target_metadata_key_opcodes": [
+    {
+      "key": "stage",
+      "offset": 2320,
+      "next_opcodes": [
+        {
+          "opcode": "BINPUT",
+          "argument": 213,
+          "offset": 2330
+        },
+        {
+          "opcode": "BININT1",
+          "argument": 1,
+          "offset": 2332
+        },
+        {
+          "opcode": "BINUNICODE",
+          "argument": "config",
+          "offset": 2334
+        },
+        {
+          "opcode": "BINPUT",
+          "argument": 214,
+          "offset": 2345
+        }
+      ]
+    },
+    {
+      "key": "config",
+      "offset": 2334,
+      "next_opcodes": [
+        {
+          "opcode": "BINPUT",
+          "argument": 214,
+          "offset": 2345
+        },
+        {
+          "opcode": "EMPTY_DICT",
+          "argument": null,
+          "offset": 2347
+        },
+        {
+          "opcode": "BINPUT",
+          "argument": 215,
+          "offset": 2348
+        },
+        {
+          "opcode": "MARK",
+          "argument": null,
+          "offset": 2350
+        }
+      ]
+    },
+    {
+      "key": "epoch",
+      "offset": 445215,
+      "next_opcodes": [
+        {
+          "opcode": "LONG_BINPUT",
+          "argument": 18721,
+          "offset": 445225
+        },
+        {
+          "opcode": "BININT1",
+          "argument": 2,
+          "offset": 445230
+        },
+        {
+          "opcode": "BINUNICODE",
+          "argument": "global_step",
+          "offset": 445232
+        },
+        {
+          "opcode": "LONG_BINPUT",
+          "argument": 18722,
+          "offset": 445248
+        }
+      ]
+    },
+    {
+      "key": "global_step",
+      "offset": 445232,
+      "next_opcodes": [
+        {
+          "opcode": "LONG_BINPUT",
+          "argument": 18722,
+          "offset": 445248
+        },
+        {
+          "opcode": "BININT2",
+          "argument": 902,
+          "offset": 445253
+        },
+        {
+          "opcode": "SETITEMS",
+          "argument": null,
+          "offset": 445256
+        },
+        {
+          "opcode": "STOP",
+          "argument": null,
+          "offset": 445257
+        }
+      ]
+    }
+  ],
+  "checkpoint_actual_sha256": "bc3f71631f07f3d0ca645808b0622f28da2c863b21622cab0ed65e8e44f329ff",
+  "checkpoint_hash_matches_prior_verified_identity": true,
+  "observed_static_values": {
+    "stage": 1,
+    "epoch": 2,
+    "global_step": 902,
+    "base_model_name": "runwayml/stable-diffusion-v1-5",
+    "lora_rank": 64,
+    "lora_alpha": 128,
+    "embed_dim": 768
+  },
+  "training_split_and_data_config_in_pickle": false,
+  "lora_metadata": {
+    "demographic_encoder": "not_included",
+    "private_run_roots": "not_included",
+    "base_model": "stable-diffusion-v1-5",
+    "lora_alpha": "128",
+    "source_checkpoint_size_bytes": "3640479384",
+    "format": "spinefairbench_lora_safetensors",
+    "lora_rank": "64",
+    "tensor_scope": "unet_lora_only",
+    "source_masks": "not_included",
+    "source_checkpoint_sha256": "bc3f71631f07f3d0ca645808b0622f28da2c863b21622cab0ed65e8e44f329ff",
+    "training_state": "not_included",
+    "optimizer_state": "not_included",
+    "raw_source_radiographs": "not_included",
+    "discriminator": "not_included"
+  },
+  "scope": "Static metadata inspection of the existing byte-verified checkpoint; no unpickling, tensor load or model execution."
+}

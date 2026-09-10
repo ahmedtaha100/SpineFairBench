@@ -131,12 +131,12 @@
     }
   ],
   "remaining_limitations": [
-    "The runtime manifest says git_dirty=true; the exact April20 uncommitted source snapshot is not recovered.",
+    "The runtime manifest says git_dirty=true. An April20 repair note and later repaired source candidate are recovered, but exact source bytes are not bound to the actual April20 execution.",
     "The recorded base commit is recoverable from local git objects; its public URL may not resolve, so exact source bytes are separately preserved.",
     "The historical run family and result lineage are recovered, but byte-identical base code cannot retrospectively authenticate the dirty executed source.",
     "The stored exploratory denominator is the usable whole-core pair population, not an independently isolated VinDr-only population.",
     "The lexical unmatched-prediction fraction and mean paired absolute difference are not clinically adjudicated hallucination rates.",
-    "The recorded base joins source reports by source_id, whereas the verified frozen arithmetic requires explicit pair_id joins; the missing dirty runtime snapshot matters for exact execution replay."
+    "The recorded base joins source reports by source_id; explicit pair_id reconstruction and the later repaired source both match the frozen arithmetic. Their agreement does not authenticate exact April20 execution."
   ],
   "current_arithmetic_verification": {
     "record": "saved-hallucination-arithmetic-verification.json",
@@ -242,5 +242,11 @@
     "repository": "ahmedtaha100/SpineFairBench-freeze",
     "revision": "c2ab560f157f242ac627a73f0a537298b004bf8f",
     "access": "access-controlled"
+  },
+  "later_recovered_source": {
+    "public_record": "later_scoring_source_recovery.json",
+    "sha256": "121a844d4bbd9836986c90eb0eb2076b23c5c8dabe1825a16e9def1254f3704d",
+    "source_snapshot": "later_scoring_source/spinefairbench",
+    "scope": "Recovered later repaired source matches all nine frozen exploratory means/counts; exact April20 execution-to-source binding remains unavailable."
   }
 }

@@ -30,6 +30,11 @@
       "sha256": "bc3f71631f07f3d0ca645808b0622f28da2c863b21622cab0ed65e8e44f329ff",
       "later_stage2_log_is_same_selected_checkpoint": false,
       "lora_export_scope": "256 U-Net LoRA tensors; demographic encoder, discriminator, optimizer and training state excluded"
+    },
+    "static_checkpoint_metadata": {
+      "public_record": "checkpoint_static_metadata.json",
+      "sha256": "7f0ee9eab7fabce7b85467a99682b25a15bf473178f43ffa73d6d783a64decec",
+      "scope": "Static pickle opcode inspection only; checkpoint is never unpickled or loaded into a model."
     }
   },
   "source_and_mask_archive": {
@@ -47998,8 +48003,14 @@
   "remaining_limits": [
     "Original complete 9024-image training DICOM bytes and annotation bytes remain unavailable.",
     "Configured partition reconstruction and partial training logs do not prove exact per-step optimizer consumption.",
-    "Historical provider snapshots and the exact dirty April20 scoring source are not authenticated.",
+    "Historical provider snapshots and the binding of actual April20 scoring execution to source bytes are not authenticated; an April20 repair note and later repaired source candidate are recovered.",
     "The public generator adapter is illustrative and does not recreate the production latent-mask and CLIP-drift path.",
     "April generation-call paths and settings do not bind runtime weight or code bytes by hash."
-  ]
+  ],
+  "later_scoring_source_recovery": {
+    "public_record": "later_scoring_source_recovery.json",
+    "sha256": "121a844d4bbd9836986c90eb0eb2076b23c5c8dabe1825a16e9def1254f3704d",
+    "source_snapshot": "later_scoring_source/spinefairbench",
+    "scope": "Recovered later repaired source matches all nine frozen exploratory means/counts; exact April20 execution-to-source binding remains unavailable."
+  }
 }

@@ -34,12 +34,14 @@
     "radiologist": "Retained reader rows and documented file-local mapping; not new reader validation.",
     "followup": "Pinned later aggregate summary and repeated-call accounting/arithmetic; does not rerun or reproduce underlying July audits.",
     "corpus-provenance": "Pinned historical file inventory, exact9024 eligible IDs, original source-scope overlap and optional configured partition reconstruction; not original training image bytes or optimizer consumption.",
-    "hallucination-provenance": "Hash-bound saved-report arithmetic with explicit pair-ID joins and separate recorded-base comparison; authenticates neither dirty historical source nor clinical accuracy."
+    "hallucination-provenance": "Hash-bound saved-report arithmetic with explicit pair-ID joins and separate recorded-base comparison; authenticates neither dirty historical source nor clinical accuracy.",
+    "score-named-scope": "New-submission scoring pins exact QC/core/intersection manifest bytes before claiming named panel membership; toy and full QC scopes remain distinct.",
+    "later-source-provenance": "Isolated arithmetic from five hash-pinned later repaired source files and frozen reports; no model execution, bootstrap, or authentication of the April20 runtime."
   },
   "historical_limits": [
     "Original complete 9024-image training DICOM bytes and annotation bytes remain unavailable.",
     "Configured partition reconstruction and partial training logs do not prove exact per-step optimizer consumption.",
-    "Historical provider snapshots and the exact dirty April20 scoring source are not authenticated.",
+    "Historical provider snapshots and the binding of actual April20 scoring execution to source bytes are not authenticated; an April20 repair note and later repaired source candidate are recovered.",
     "The public generator adapter is illustrative and does not recreate the production latent-mask and CLIP-drift path.",
     "April generation-call paths and settings do not bind runtime weight or code bytes by hash.",
     "Source-image membership does not establish patient-level independence."
@@ -88,6 +90,9 @@
     "historical_scoring_source": "provenance/historical_scoring_source/manifest.json",
     "archive_variant_comparison": "provenance/archive_variant_comparison.json",
     "scoring_lineage": "provenance/scoring_lineage.json",
-    "scoring_arithmetic_verification": "provenance/scoring_arithmetic_verification.json"
-  }
+    "scoring_arithmetic_verification": "provenance/scoring_arithmetic_verification.json",
+    "later_scoring_source_recovery": "provenance/later_scoring_source_recovery.json",
+    "checkpoint_static_metadata": "provenance/checkpoint_static_metadata.json"
+  },
+  "updated_at_utc": "2026-09-10T05:34:17+00:00"
 }

@@ -219,6 +219,58 @@ class ReleaseIntegrityTests(unittest.TestCase):
             with self.assertRaisesRegex(scoring.ScoringError, "outside the common core"):
                 scoring.load_benchmark_pairs(root, "all-model-intersection-2166")
 
+    def test_named_scope_rejects_self_consistent_replacement_before_scoring(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            _, row = self._dataset(root)
+            core = root / "artifacts/freeze_runs/2026-04-09/evaluation_source_subset_core1000.json"
+            core.parent.mkdir(parents=True)
+            core.write_text(json.dumps({"source_ids": ["case"], "actual_n": 1}))
+            payload = {"schema_version": scoring.SUBMISSION_SCHEMA_VERSION,
+                       "scope": "common-core-1000", "model": {"name": "test"},
+                       "results": [{"pair_id": row["pair_id"], "source_report": "No fracture.",
+                                    "counterfactual_report": "No fracture."}]}
+            # Valid internal membership cannot authenticate the named frozen scope.
+            self.assertEqual(len(scoring.load_benchmark_pairs(root, "common-core-1000")), 1)
+            with patch.object(scoring, "source_clustered_bootstrap_ci") as bootstrap:
+                with self.assertRaisesRegex(scoring.ScoringError, "Frozen scope manifest SHA-256 mismatch"):
+                    scoring.score_submission_payload(root, payload)
+                bootstrap.assert_not_called()
+
+    def test_named_scope_pins_every_required_manifest_and_records_identity(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            _, row = self._dataset(root)
+            core = root / "artifacts/freeze_runs/2026-04-09/evaluation_source_subset_core1000.json"
+            core.parent.mkdir(parents=True)
+            core.write_text(json.dumps({"source_ids": ["case"], "actual_n": 1}))
+            intersection = root / "artifacts/Results/final_inputs/all_model_intersection_2166_manifest.json"
+            intersection.parent.mkdir(parents=True)
+            intersection.write_text(json.dumps({"records": [row], "pair_count": 1}))
+            pins = {relative: hashlib.sha256((root / relative).read_bytes()).hexdigest()
+                    for relative in scoring.FROZEN_SCOPE_MANIFEST_HASHES}
+            with patch.object(scoring, "FROZEN_SCOPE_MANIFEST_HASHES", pins):
+                for scope in ("common-core-1000", "all-model-intersection-2166"):
+                    payload = {"schema_version": scoring.SUBMISSION_SCHEMA_VERSION,
+                               "scope": scope, "model": {"name": "test"},
+                               "results": [{"pair_id": row["pair_id"], "source_report": "No fracture.",
+                                            "counterfactual_report": "No fracture."}]}
+                    with patch.object(scoring, "source_clustered_bootstrap_ci", return_value=(1.0, 1.0)):
+                        output = scoring.score_submission_payload(root, payload)
+                    identity = output["artifact_identity"]
+                    self.assertEqual(identity["status"], "verified_frozen_scope")
+                    self.assertEqual(len(identity["manifest_sha256"]), 2 if scope == "common-core-1000" else 3)
+                    self.assertTrue(output["coverage"]["comparable_to_panel_scope"])
+                    for relative, digest in identity["manifest_sha256"].items():
+                        with self.subTest(scope=scope, relative=relative):
+                            self.assertEqual(digest, pins[relative])
+                            path = root / relative
+                            original = path.read_bytes()
+                            path.write_bytes(original + b"\n")
+                            with self.assertRaisesRegex(scoring.ScoringError, "SHA-256 mismatch"):
+                                scoring.score_submission_payload(root, payload)
+                            path.write_bytes(original)
+
     def test_followup_rejects_wrong_aggregate_arithmetic(self):
         source = verify.CODE_ROOT / "supplement/retained_followup_audit_summary.json"
         summary = json.loads(source.read_text())

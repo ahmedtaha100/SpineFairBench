@@ -193,6 +193,9 @@ April 20 reports and manifests connect the recorded result lineage, while
 `git_dirty=true` and the different recorded-base join behavior leave the exact
 executed source unauthenticated. Historical base sources are supplied as
 inspection snapshots with exact hashes, not as verified production executables.
+The provenance index also supplies a later retained repaired source that matches
+all nine means/counts and the hash of an April 20 note documenting the repair.
+These records narrow the gap without authenticating the exact April runtime.
 
 The original inventory, complete training logs and recovered generation inputs
 remain access-controlled. The provenance index gives pinned download paths for

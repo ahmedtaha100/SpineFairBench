@@ -17,12 +17,17 @@ following the [reviewer quickstart](../reviewer_quickstart.md).
 | [Training log excerpts](training_log_excerpts.json) | Exact dated lines confirm 7,219/902 train/validation counts, an epoch-2 checkpoint, and later Stage-2 execution. | The retained code includes corrupt-image fallback and drops incomplete training batches; the log does not record per-step consumption or establish that fallback occurred. |
 | [Public generator assets](https://huggingface.co/ahmedtaha100/spinefairbench-generator/tree/77335a8c3fdc388020f5582fb04df741b5fe7735) | The public checkpoint equals the retained Stage-1 `epoch_2.pt` bytes; the LoRA header identifies that checkpoint. | The selected checkpoint does not contain the later Stage-2 updates recorded in the full log. The public adapter remains illustrative. |
 | [Source PNGs and masks](historical_asset_manifest.json) | All 2,987 generation-source PNGs and 2,987 production masks were downloaded and hash-verified against the pinned backup; every hash also matches the original full-freeze inventory. | These are access-controlled generation assets, not recovery of the complete training DICOM corpus. |
-| [Scoring lineage](scoring_lineage.json) | Original April 20 run manifests, logs, configuration and reports connect all nine archived exploratory-statistic objects to the frozen summary. | The run records `git_dirty=true`; the exact uncommitted scoring source is not recovered. |
+| [Scoring lineage](scoring_lineage.json) | Original April 20 records connect all nine archived exploratory-statistic objects to the frozen summary. An April 20 preservation note documents the pair-ID repair; a later retained repaired source matches all nine means/counts. | The run records `git_dirty=true`; the later source is not hash-bound to the actual April 20 execution. |
 
 The April generation calls record checkpoint paths and settings but do not bind
 the runtime weight or code bytes by hash. The public checkpoint's identity as
 the selected archival Stage-1 snapshot does not authenticate its loading during
 those calls.
+
+[Static checkpoint metadata](checkpoint_static_metadata.json) independently
+identifies Stage 1, epoch 2 and global step 902 from pickle opcodes in the
+hash-verified checkpoint. No checkpoint was unpickled or loaded into a model;
+these fields do not supply a consumed-sample ledger.
 
 All 1,000 common-core source IDs, all 2,000 evaluation-pool source IDs and all
 2,950 released QC-pool source IDs occur in the reconstructed eligible corpus.
@@ -73,8 +78,27 @@ change against the frozen values. It separately evaluates the recorded base
 implementation's joining behavior. Agreement of the explicit-pair reconstruction
 does not authenticate the dirty historical producer. The recorded base produces
 different means for eight models and different denominators for three models on
-the same frozen inputs. The exact missing runtime patch is therefore a substantive
-provenance gap. No retained result is replaced by that comparison.
+the same frozen inputs. No retained result is replaced by that comparison.
+
+The [later source recovery](later_scoring_source_recovery.json) narrows this gap.
+A note preserved on April 20 at 17:41:09 UTC documents the `pair_id` repair and
+names the changed files. Its exact hash and immutable private location are in
+the recovery record; the full note contains local paths and remains private.
+Five source files recovered from a direct descendant of the recorded base,
+with April 27 Git metadata, include the repaired pairing implementation. An
+isolated arithmetic check of that source matches all nine frozen means and
+denominators. The copied files are inspectable under `later_scoring_source/`.
+The remaining requirement is the binding between actual April 20 execution
+and source bytes. Later Git metadata and arithmetic agreement cannot provide
+that retrospective authentication.
+
+```sh
+python scripts/verify_recovered_scoring_candidate.py --artifacts artifacts
+```
+
+This command verifies all five candidate source files and six frozen input
+files by hash, isolates the retained pairing function, and checks the nine
+saved means/counts. It disables the historical aggregate/bootstrap path.
 
 The quantity is lexical, uses the whole-core usable-pair population, and is
 neither a conventional false-positive rate nor a clinically adjudicated
@@ -93,7 +117,7 @@ from `ahmedtaha100/SpineFairBench-freeze-backup` at revision
 `aee6e70bddb487fad3c5580033e1e368aaf605af`. The asset manifest lists each of the
 5,974 files and its corresponding path in the earlier full freeze. Historical
 provider snapshots, complete original training image bytes, the April generator's
-runtime code/weight hash binding and the exact dirty scoring source remain
+runtime code/weight hash binding and the April scoring execution-to-source binding remain
 unresolved; available records do not make exact historical
 end-to-end regeneration possible.
 

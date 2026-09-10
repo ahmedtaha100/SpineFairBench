@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from dataclasses import dataclass
@@ -20,6 +21,30 @@ SUPPORTED_SCOPES = {
     "qc-passed",
     "toy",
 }
+FROZEN_SCOPE_MANIFEST_HASHES = {
+    "dataset/qc_passed_pair_manifest.jsonl": "43baab39ce60b9e63adf98a4c74292b78e0baada063227ab2631f3430c3d2c83",
+    "artifacts/freeze_runs/2026-04-09/evaluation_source_subset_core1000.json": "56d52393844c11d9aa5b9aed9fe9db144dfa8193c2584d7d980d501bedc2af4d",
+    "artifacts/Results/final_inputs/all_model_intersection_2166_manifest.json": "b05950bc2aafca40547c7bb2eab4139983077af837e6f3e0219c6e31155b2314",
+}
+
+
+def _verify_named_scope_identity(artifacts_root: Path, scope: str) -> dict[str, str]:
+    """Bind named panel membership to the manifests in both frozen archives."""
+    if scope not in {"common-core-1000", "all-model-intersection-2166"}:
+        return {}
+    verified = {}
+    for relative, expected in FROZEN_SCOPE_MANIFEST_HASHES.items():
+        if scope == "common-core-1000" and relative.endswith("all_model_intersection_2166_manifest.json"):
+            continue
+        try:
+            with (artifacts_root / relative).open("rb") as handle:
+                actual = hashlib.file_digest(handle, "sha256").hexdigest()
+        except OSError as exc:
+            raise ScoringError(f"Cannot read frozen scope manifest: {relative}") from exc
+        if actual != expected:
+            raise ScoringError(f"Frozen scope manifest SHA-256 mismatch: {relative}")
+        verified[relative] = actual
+    return verified
 
 
 class ScoringError(ValueError):
@@ -323,6 +348,7 @@ def score_submission_payload(
     selected_scope = scope or str(validated["scope"])
     if selected_scope not in SUPPORTED_SCOPES:
         raise ScoringError(f"Unsupported scope {selected_scope!r}")
+    manifest_hashes = _verify_named_scope_identity(artifacts_root, selected_scope)
     submitted_by_pair = {str(entry["pair_id"]): entry for entry in validated["results"]}
     benchmark_pairs = load_benchmark_pairs(
         artifacts_root,
@@ -437,6 +463,10 @@ def score_submission_payload(
         "scored_at_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "model": model,
         "scope": selected_scope,
+        "artifact_identity": {
+            "status": "verified_frozen_scope" if manifest_hashes else "not_a_frozen_panel_scope",
+            "manifest_sha256": manifest_hashes,
+        },
         "scoring_config": {
             "bootstrap": "source_clustered_percentile_numpy_pcg64",
             "bootstrap_iterations": bootstrap_iterations,

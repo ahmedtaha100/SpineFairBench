@@ -95,6 +95,8 @@ The output's `coverage_complete` field reports membership completeness.
 common-core or all-model-intersection membership; it does not verify prompt,
 provider settings, or clinical comparability. The full `qc-passed` collection has
 no corresponding retained nine-model panel.
+Named panel scopes require the exact frozen QC and scope manifest hashes in
+either released archive; the output records these under `artifact_identity`.
 The scorer rejects incomplete coverage and records refusals, source-clustered
 intervals, coverage, and per-pair scores. Full refusals are excluded; partial
 refusals remain. Resolve API errors before submitting reports; do not convert
@@ -157,8 +159,10 @@ inconsistent corpus IDs, wrong configured split membership and source-scope drif
 The retained exploratory scoring audit is available with
 `python scripts/verify_hallucination_provenance.py --artifacts artifacts`;
 its explicit-pair reconstruction matches all nine frozen means and denominators.
-The recorded base scorer differs, so its missing dirty runtime patch remains
-an identified provenance gap.
+The recorded base scorer differs. An April 20 repair note and a
+[later retained repaired source](provenance/later_scoring_source_recovery.json)
+now connect the repair and reproduce those same means/counts; the actual April
+execution remains unbound to exact source bytes.
 
 The metrics/ and evaluation/ modules retain the original endpoint, prompt, and
 Stage-1 parser definitions for inspection. The optional analysis/mitigation.py
