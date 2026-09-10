@@ -1,0 +1,23 @@
+{
+  "scope": "Partial source IDs named in missing-demographic warnings; these records do not show image-loading failure, fallback execution or a complete consumed-sample sequence.",
+  "records": {
+    "training_logs/full_vindr_buu_train.log": {
+      "logged_unique_ids": 2763,
+      "configured_split_intersections": {
+        "train": 2481,
+        "val": 282,
+        "test": 0
+      },
+      "not_in_any_configured_split": 0
+    },
+    "training_logs/pilot_vindr_buu_train.log": {
+      "logged_unique_ids": 2763,
+      "configured_split_intersections": {
+        "train": 2481,
+        "val": 282,
+        "test": 0
+      },
+      "not_in_any_configured_split": 0
+    }
+  }
+}

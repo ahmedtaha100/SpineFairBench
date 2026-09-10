@@ -1,0 +1,80 @@
+training:
+  base_model: "runwayml/stable-diffusion-v1-5"
+  lora_rank: 64
+  lora_alpha: 128
+  learning_rate: 1.0e-4
+  batch_size: 16
+  gradient_accumulation_steps: 1
+  num_epochs_stage1: 100
+  num_iterations_stage2: 2000
+  mixed_precision: "fp16"
+  lambda_adversarial: 0.005
+  lambda_kl: 1.0e-7
+  lambda_cycle: 1.0
+  checkpoint_every: 5000
+  sample_every: 1000
+  warmup_steps: 1000
+  max_grad_norm: 1.0
+  seed: 42
+  early_stopping: true
+  early_stopping_patience: 10
+  early_stopping_min_epochs: 20
+  early_stopping_min_iterations_stage2: 500
+  early_stopping_patience_stage2: 200
+
+data:
+  root_dir: "./data/unified/03_final/images"
+  annotations_csv: "./data/unified/03_final/annotations.csv"
+  image_size: 512
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  num_workers: 4
+  cache_dir: "./data/cache"
+  source_filter:
+    - "vindr"
+    - "buu"
+
+generation:
+  num_pairs: 3000
+  demographic_combinations:
+    - {source_age: "elderly", target_age: "young", source_sex: "M", target_sex: "M"}
+    - {source_age: "elderly", target_age: "young", source_sex: "F", target_sex: "F"}
+    - {source_age: "young", target_age: "elderly", source_sex: "M", target_sex: "M"}
+    - {source_age: "young", target_age: "elderly", source_sex: "F", target_sex: "F"}
+    - {source_sex: "M", target_sex: "F", source_age: "middle", target_age: "middle"}
+    - {source_sex: "F", target_sex: "M", source_age: "middle", target_age: "middle"}
+  inference_steps: 50
+  guidance_scale: 5.0
+  output_dir: "./outputs/counterfactuals"
+  core_pairs: 1800
+  extension_pairs: 1200
+  source_reuse_cap: 2
+  core_datasets:
+    - "vindr"
+    - "buu"
+
+evaluation:
+  vlm_models:
+    - "gpt-5.4"
+    - "gpt-4o"
+    - "claude-opus-4-6"
+    - "claude-sonnet-4-6"
+    - "gemini-2.5-pro"
+    - "gemini-3-flash-preview"
+    - "qwen2.5-vl"
+    - "llama-4-maverick"
+    - "medgemma"
+  max_concurrent_requests: 5
+  retry_attempts: 3
+  retry_backoff_base: 2.0
+  timeout_seconds: 120
+  output_dir: "./outputs/evaluations"
+
+analysis:
+  bootstrap_samples: 1000
+  significance_level: 0.05
+  correction_method: "bonferroni"
+  figure_format: "pdf"
+  figure_dpi: 300
+  output_dir: "./outputs/analysis"

@@ -1,0 +1,30 @@
+{
+  "personal_archive_sha256": "f90f8cc54d9ef67d6ffc1bb21d53f9fcf5cff9ca94300353aa83db2ad967e238",
+  "members": 91846,
+  "different_from_anonymous": [
+    "REVIEWER_ACCESS_README.md",
+    "README.md",
+    "croissant.json",
+    "benchmark_card.md",
+    "SHA256SUMS.txt",
+    "manifests/release_manifest.json",
+    "dataset/README.md",
+    "dataset/release_manifest.json",
+    "artifacts/freeze_runs/2026-04-09/canonical_definitions.json",
+    "artifacts/freeze_runs/2026-04-09/exclusion_evidence/gemini_baseline_backfill_canonical_2026-04-16.json",
+    "artifacts/freeze_runs/2026-04-09/exclusion_evidence/medgemma_baseline_canary_canonical.json"
+  ],
+  "extra_in_personal": [
+    "release_notes_2026-06-01.md"
+  ],
+  "missing_in_personal": [],
+  "personal_anchors": {
+    "SHA256SUMS.txt": "0c5802669f87c479b3cafe00c93c64cc38d845466f0c1c26312a21ef374c315b",
+    "artifacts/Results/analysis/common_core_1000_summary.json": "e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5",
+    "artifacts/Results/final_inputs/panels/baseline_only_retained/panel_manifest.json": "a92731f661b808adfe42d1f16fe7ce6df6075b380a58c76f3f68bc4ccfc491fb",
+    "artifacts/Results/final_inputs/panels/full_pipeline_retained/panel_manifest.json": "519ba039863a94dde12dbb860509ab5679c76872ca49debb1d64af11cb6e599a",
+    "artifacts/freeze_runs/2026-04-09/canonical_definitions.json": "d7f31393d8bd534037e64ffee3231f70be6d86efdf433602a8a45ead37e8cda8",
+    "dataset/release_manifest.json": "55b1919019f6b2994c67b0a1a89c0037d22f64dd3bbc51b3294b52730e3daf81",
+    "radiologist_validation_SHA256SUMS.txt": "5efaf23980f1938fb831b5671e35566820a5bf81210fb08ae47e0af9d98f015d"
+  }
+}

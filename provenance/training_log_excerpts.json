@@ -1,0 +1,43 @@
+{
+  "source_file": "provenance_recovery_2026-09-10/New_Results/training_logs/full_vindr_buu_train.log",
+  "source_sha256": "3458c9029dab0dff86abecd43f47aec97c4d944510422587d23f65643888bf14",
+  "line_number_method": "1-based LF-delimited source-file line; progress carriage returns do not increment line",
+  "records": [
+    {
+      "line": 25,
+      "text": "2026-03-18 03:40:53 | INFO     | spinefairbench.data.dataset | SpineXRDataset [train]: 7219 images"
+    },
+    {
+      "line": 28,
+      "text": "2026-03-18 03:40:53 | INFO     | spinefairbench.data.dataset | SpineXRDataset [val]: 902 images"
+    },
+    {
+      "line": 17139,
+      "text": "2026-03-18 04:07:41 | INFO     | spinefairbench.train | Epoch 2/100 complete. G loss: 0.2177, D loss: 4.4363"
+    },
+    {
+      "line": 17140,
+      "text": "2026-03-18 04:08:08 | INFO     | spinefairbench.train | Epoch 2/100 val loss: 0.2162"
+    },
+    {
+      "line": 17141,
+      "text": "2026-03-18 04:08:14 | INFO     | spinefairbench.models.cycle_diffusion | Checkpoint saved to outputs/20260318_034047_train/checkpoints/epoch_2.pt"
+    },
+    {
+      "line": 17257,
+      "text": "2026-03-18 07:46:39 | INFO     | spinefairbench.train | Stage 2 early stopping at iteration 700"
+    },
+    {
+      "line": 17260,
+      "text": "2026-03-18 07:46:53 | INFO     | spinefairbench.train | Using best stage 2 checkpoint as latest: checkpoints/latest.pt"
+    },
+    {
+      "line": 17261,
+      "text": "2026-03-18 07:46:53 | INFO     | spinefairbench.train | Training complete. Final checkpoint: outputs/20260318_034047_train/checkpoints/final.pt"
+    }
+  ],
+  "source_repository": "ahmedtaha100/SpineFairBench-freeze",
+  "source_revision": "c2ab560f157f242ac627a73f0a537298b004bf8f",
+  "source_access": "access-controlled",
+  "scope": "Selected exact dated log statements; partial runtime evidence, not a complete consumed-sample record."
+}

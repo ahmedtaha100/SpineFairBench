@@ -129,6 +129,29 @@ class ReleaseIntegrityTests(unittest.TestCase):
                 with self.assertRaisesRegex(SystemExit, "Pinned release identity mismatch"):
                     verify.command_release_identity(argparse.Namespace(artifacts=str(data)))
 
+    def test_release_identity_requires_explicit_personal_variant(self):
+        with tempfile.TemporaryDirectory() as temp, contextlib.redirect_stdout(io.StringIO()):
+            root = Path(temp)
+            code, data = root / "code", root / "data"
+            (code / "prompts").mkdir(parents=True)
+            data.mkdir()
+            registry = {"prompt_registry": {"system": "report", "primary": "image"}}
+            for path in (data / "prompts.json", code / "prompts/canonical_definitions.json"):
+                path.write_text(json.dumps(registry))
+            (data / "SHA256SUMS.txt").write_bytes(b"personal\n")
+            release = {"schema_version": "1.0", "frozen_prompt_registry": "prompts.json",
+                       "artifact_archive": {"revision": "anonymous"},
+                       "artifact_anchors": {"SHA256SUMS.txt": hashlib.sha256(b"anonymous\n").hexdigest()},
+                       "archive_variants": {"personal": {"artifact_archive": {"revision": "personal"},
+                           "artifact_anchors": {"SHA256SUMS.txt": hashlib.sha256(b"personal\n").hexdigest()}}}}
+            (code / "release_manifest.json").write_text(json.dumps(release))
+            with patch.object(verify, "CODE_ROOT", code):
+                with self.assertRaisesRegex(SystemExit, "Pinned release identity mismatch"):
+                    verify.command_release_identity(argparse.Namespace(artifacts=str(data)))
+                verify.command_release_identity(argparse.Namespace(artifacts=str(data), archive_variant="personal"))
+                with self.assertRaisesRegex(SystemExit, "Unsupported archive variant"):
+                    verify.command_release_identity(argparse.Namespace(artifacts=str(data), archive_variant="unknown"))
+
     def test_complete_qc_collection_is_not_a_retained_panel_scope(self):
         pair = scoring.BenchmarkPair("case__young_female", "case", "young_female")
         payload = {"schema_version": scoring.SUBMISSION_SCHEMA_VERSION, "scope": "qc-passed",

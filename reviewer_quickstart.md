@@ -47,6 +47,32 @@ reader checksum manifest 12 files. The identity check pins the manifests; the
 checksum commands verify their listed bytes. Newly created files outside those
 manifests are not certified by the checksum command.
 
+### Personal archive variant
+
+The author-owned archive is a distinct package at revision
+`ee679338f9a54d5c5e281eebeb841edac06332fe`, SHA-256
+`f90f8cc54d9ef67d6ffc1bb21d53f9fcf5cff9ca94300353aa83db2ad967e238`,
+3,734,718,993 bytes. Its 91,845 checksum entries were verified. A full archive
+comparison found 11 differing metadata files, one extra release note and no
+missing files; all other 91,834 members, including images, reports and results,
+are identical. All 11 historical prompt entries agree despite different registry
+metadata. See the [comparison record](provenance/archive_variant_comparison.json).
+
+Download it into a separate directory from the anonymous archive:
+
+```sh
+hf download ahmedtaha100/spinefairbench-artifacts spinefairbench_artifacts.tar.gz spinefairbench_artifacts.tar.gz.sha256 --repo-type dataset --revision ee679338f9a54d5c5e281eebeb841edac06332fe --local-dir personal-bundle
+python reviewer_verify.py checksums personal-bundle/spinefairbench_artifacts.tar.gz.sha256
+tar -xzf personal-bundle/spinefairbench_artifacts.tar.gz -C personal-bundle
+python reviewer_verify.py release-identity --archive-variant personal --artifacts personal-bundle/artifacts
+python reviewer_verify.py checksums personal-bundle/artifacts/SHA256SUMS.txt
+```
+
+The personal identity command must report seven matching anchors and the named
+personal revision. Other retained-result commands accept
+`--artifacts personal-bundle/artifacts`. The default identity variant remains
+`anonymous`; the two archive or checksum-manifest identities are not interchangeable.
+
 ## Reader-record erratum (2026-09-07)
 
 The frozen reader files and their hashes are preserved. Their reviewer labels
@@ -147,6 +173,31 @@ weight sources equally and have 18 unadjusted raw-excess intervals.
 | Target estimator and reconstruction audit | Supplement `target_validity` and `reconstruction` | Retained results and their limitations, not demographic or causal validation |
 | Mitigation | `stage1-confidence` and `mitigation` | Saved parse-gate sample, table arithmetic and binding-rule outcome |
 | Reader study | `radiologist` and the erratum above | Retained rows under documented file-local labels |
+
+## Recovered historical provenance
+
+The [provenance index](provenance/README.md) provides complete instructions and
+hashes for the recovered eligible corpus, configured partition, training logs,
+production checkpoint, source PNGs, masks and scoring lineage. The public
+reconstruction identifies 9,024 eligible sources and configured partitions of
+7,219/902/903 train/validation/test sources. The common-core split overlaps are
+395/326/279; these are source IDs, not patient-disjointness or optimizer records.
+
+```sh
+python scripts/verify_hallucination_provenance.py --artifacts artifacts
+```
+
+This verifies nine saved exploratory means and denominators using explicit
+`pair_id` joins, without changing the frozen table or replaying CIs. The original
+April 20 reports and manifests connect the recorded result lineage, while
+`git_dirty=true` and the different recorded-base join behavior leave the exact
+executed source unauthenticated. Historical base sources are supplied as
+inspection snapshots with exact hashes, not as verified production executables.
+
+The original inventory, complete training logs and recovered generation inputs
+remain access-controlled. The provenance index gives pinned download paths for
+authorized users and public excerpts where full records are unavailable. A hash
+or access instruction is not a claim that every reviewer already has access.
 
 ## Optional scorer inspection
 

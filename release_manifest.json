@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "release_id": "retained-evidence-2026-09-09",
-  "created_at_utc": "2026-09-09T22:20:22+00:00",
+  "release_id": "retained-evidence-provenance-2026-09-10",
+  "created_at_utc": "2026-09-10T05:04:14+00:00",
   "code_base_commit": "91869bebf549dd6b35f0549fcea2bf4b58fe9baf",
   "code_identity": "SHA256SUMS.txt identifies this code package; code_base_commit is its historical starting point, not a claim about the current checkout HEAD.",
   "artifact_archive": {
@@ -24,7 +24,7 @@
     "artifacts/Results/final_inputs/panels/baseline_only_retained/panel_manifest.json": "a92731f661b808adfe42d1f16fe7ce6df6075b380a58c76f3f68bc4ccfc491fb"
   },
   "verification_scopes": {
-    "release-identity": "Pinned anchor hashes and preserved historical prompt entries; not all file bytes.",
+    "release-identity": "Explicit anonymous (default) or personal variant: seven pinned anchor hashes and preserved historical prompt entries; not all file bytes.",
     "checksums": "Every file named by the supplied checksum manifest; not unlisted files or scientific validity.",
     "dataset": "Unique IDs, QC-passed selection, source/image mappings, PNG membership and sizes; does not rerun QC or validate demographics.",
     "table2": "Nine retained models, lexical endpoints, usable/refusal counts from saved reports; confidence intervals are read unless --recompute-ci is supplied.",
@@ -32,13 +32,17 @@
     "stage1-confidence": "Saved diagnosis-parse sample and eligibility decision, not clinician accuracy.",
     "mitigation": "Published table accounting and joint-rule outcome; not full raw-trace reanalysis.",
     "radiologist": "Retained reader rows and documented file-local mapping; not new reader validation.",
-    "followup": "Pinned later aggregate summary and repeated-call accounting/arithmetic; does not rerun or reproduce underlying July audits."
+    "followup": "Pinned later aggregate summary and repeated-call accounting/arithmetic; does not rerun or reproduce underlying July audits.",
+    "corpus-provenance": "Pinned historical file inventory, exact9024 eligible IDs, original source-scope overlap and optional configured partition reconstruction; not original training image bytes or optimizer consumption.",
+    "hallucination-provenance": "Hash-bound saved-report arithmetic with explicit pair-ID joins and separate recorded-base comparison; authenticates neither dirty historical source nor clinical accuracy."
   },
   "historical_limits": [
-    "Source radiographs and production masks are not redistributed.",
-    "Public generator adapter is not the historical production generator.",
-    "Historical provider snapshots and complete training membership are not established by this package.",
-    "Checksum identity does not establish clinical correctness, demographic attainment, licensing permission, or causal attribution."
+    "Original complete 9024-image training DICOM bytes and annotation bytes remain unavailable.",
+    "Configured partition reconstruction and partial training logs do not prove exact per-step optimizer consumption.",
+    "Historical provider snapshots and the exact dirty April20 scoring source are not authenticated.",
+    "The public generator adapter is illustrative and does not recreate the production latent-mask and CLIP-drift path.",
+    "April generation-call paths and settings do not bind runtime weight or code bytes by hash.",
+    "Source-image membership does not establish patient-level independence."
   ],
   "supplemental_analysis_scope": "Later ML4H follow-up analyses are separate from this historical archive and require their own identified artifacts.",
   "supplemental_artifacts": {
@@ -51,5 +55,39 @@
       "source_path": "Manuscript/followup_audit_summary.json",
       "scope": "Byte-identical aggregate extract of retained July audits; added separately in September, not part of the historical archive. Underlying raw follow-up assets are not all supplied."
     }
+  },
+  "archive_variants": {
+    "personal": {
+      "artifact_archive": {
+        "repository": "ahmedtaha100/spinefairbench-artifacts",
+        "revision": "ee679338f9a54d5c5e281eebeb841edac06332fe",
+        "filename": "spinefairbench_artifacts.tar.gz",
+        "size_bytes": 3734718993,
+        "sha256": "f90f8cc54d9ef67d6ffc1bb21d53f9fcf5cff9ca94300353aa83db2ad967e238",
+        "extracted_root": "artifacts",
+        "manifest_entries": 91845
+      },
+      "artifact_anchors": {
+        "SHA256SUMS.txt": "0c5802669f87c479b3cafe00c93c64cc38d845466f0c1c26312a21ef374c315b",
+        "artifacts/Results/analysis/common_core_1000_summary.json": "e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5",
+        "artifacts/Results/final_inputs/panels/baseline_only_retained/panel_manifest.json": "a92731f661b808adfe42d1f16fe7ce6df6075b380a58c76f3f68bc4ccfc491fb",
+        "artifacts/Results/final_inputs/panels/full_pipeline_retained/panel_manifest.json": "519ba039863a94dde12dbb860509ab5679c76872ca49debb1d64af11cb6e599a",
+        "artifacts/freeze_runs/2026-04-09/canonical_definitions.json": "d7f31393d8bd534037e64ffee3231f70be6d86efdf433602a8a45ead37e8cda8",
+        "dataset/release_manifest.json": "55b1919019f6b2994c67b0a1a89c0037d22f64dd3bbc51b3294b52730e3daf81",
+        "radiologist_validation_SHA256SUMS.txt": "5efaf23980f1938fb831b5671e35566820a5bf81210fb08ae47e0af9d98f015d"
+      }
+    }
+  },
+  "provenance": {
+    "index": "provenance/README.md",
+    "historical_asset_manifest": "provenance/historical_asset_manifest.json",
+    "eligible_corpus": "provenance/training_membership_reconstruction.json",
+    "configured_splits": "provenance/configured_training_split_reconstruction.json",
+    "training_log_excerpts": "provenance/training_log_excerpts.json",
+    "historical_training_source": "provenance/historical_training_source/manifest.json",
+    "historical_scoring_source": "provenance/historical_scoring_source/manifest.json",
+    "archive_variant_comparison": "provenance/archive_variant_comparison.json",
+    "scoring_lineage": "provenance/scoring_lineage.json",
+    "scoring_arithmetic_verification": "provenance/scoring_arithmetic_verification.json"
   }
 }

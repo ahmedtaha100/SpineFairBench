@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "scope": "Inspection snapshot of three historical training files after applying the recovered patch, plus recorded configuration. This is not a complete runnable production package.",
+  "archival_base_commit": "b9bc1c69c1be2acb7e73637b9971c149ddd3be27",
+  "public_commit_resolution": "Historical identifier recovered from local git objects; no publicly retrievable commit URL is asserted.",
+  "source_patch": {
+    "repository": "ahmedtaha100/SpineFairBench-freeze",
+    "revision": "1f36d0425d416ac9445f386ec092c1152ceb67f2",
+    "path": "freeze_2026_03_20/git_uncommitted.patch",
+    "sha256": "a7e978928c881c4f8279bbb1901cff739fa1b8144e312a8494ff8584338648af",
+    "access": "access-controlled"
+  },
+  "files": [
+    {
+      "path": "historical_training_source/spinefairbench/data/dataset.py",
+      "historical_path": "spinefairbench/data/dataset.py",
+      "sha256": "00e52244350b146b84ac37367a44ff703493613b2f218b61424bfe5c192334ad"
+    },
+    {
+      "path": "historical_training_source/spinefairbench/data/dataloader.py",
+      "historical_path": "spinefairbench/data/dataloader.py",
+      "sha256": "81015b0f7d17d0acf1bcb8b6c8562b58bc0ae63692f089bffaa3ca1df409f328"
+    },
+    {
+      "path": "historical_training_source/spinefairbench/train.py",
+      "historical_path": "spinefairbench/train.py",
+      "sha256": "5e22a9a5430bf543919bf6bef90e6543c559371776aad2185203f4ec2970a761"
+    }
+  ],
+  "config": {
+    "path": "historical_training_source/current_config.yaml",
+    "sha256": "62dc4ea9620ceb2427d10248fe39a6ed4d2b5424e7e910e689bc12ac884df839"
+  },
+  "public_file_path_base": "provenance/ (repository-relative)"
+}

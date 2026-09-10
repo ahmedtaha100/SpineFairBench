@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0",
+  "record_type": "saved_hallucination_arithmetic_verification",
+  "scope": "Current arithmetic reconstruction from frozen reports; no model call, bootstrap, or authentication of the dirty historical runtime.",
+  "recorded_base_commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+  "recorded_runtime_git_dirty": true,
+  "source_sha256": {
+    "analyze.py": "5fc2eeb362ada8a4720db8db467ea65b3202f4a5c4e34289cdd66e3f5a0d3f1f",
+    "metrics/hallucination.py": "fe82ca6cbad226bbb47129b3a958ae86dc2bf7e08ae7d0e73d0992a4f9fc3840",
+    "metrics/diagnostic_label.py": "79650c751cb346c688d0741df7f872b6cafb9076d761f04e6ffa4961702240ea",
+    "metrics/refusal_detector.py": "45830d930cbbdbf4f35582aa94e688b7590c302a4072e67f8b0cfc33be9915a3",
+    "data/annotations.py": "2bed2312045293de07b8196454d2e957e291bce190f759122ad7881be6a9929c"
+  },
+  "artifact_sha256": {
+    "Results/analysis/common_core_1000_summary.json": "e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5",
+    "Results/final_inputs/panels/full_pipeline_retained/evaluation_results.json": "5e3ff8d1c3cc808e2199e1c19f0b6c456437c21db2bc58df05aca0c34891b7b3",
+    "Results/final_inputs/panels/baseline_only_retained/evaluation_results.json": "7d900f5e2965e9ad863e0c1a0a6e2bcd41a03c5a9bc7339efc60566172b0e67a",
+    "Results/final_inputs/panels/full_pipeline_retained/pairs.json": "cb5c29f25c54a086c934c77517e8e28ae695704192f181084c5efdc5a23c58bb",
+    "Results/final_inputs/panels/baseline_only_retained/pairs.json": "cb5c29f25c54a086c934c77517e8e28ae695704192f181084c5efdc5a23c58bb"
+  },
+  "pair_id_recipe": "Join source/generated reports by model and pair_id, exclude errors and full refusals, compute mean absolute difference of unmatched-positive-prediction fractions relative to source labels.",
+  "recorded_base_recipe": "Mirror analyze.py source_id-keyed last-surviving source reports and source_id::image_path-keyed generated reports, then retain generated rows with any surviving source report and source labels.",
+  "models": {
+    "claude-opus-4-6": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.012229428206166574,
+      "saved_mean_disparity": 0.012229428206166572,
+      "absolute_error": 1.734723475976807e-18,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.012104861954786916,
+        "absolute_error_against_saved": 0.00012456625137965624,
+        "denominator_matches_saved": true
+      }
+    },
+    "claude-sonnet-4-6": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.030924390766811978,
+      "saved_mean_disparity": 0.030924390766811975,
+      "absolute_error": 3.469446951953614e-18,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.03292211581981467,
+        "absolute_error_against_saved": 0.001997725053002695,
+        "denominator_matches_saved": true
+      }
+    },
+    "gemma-4": {
+      "n_pairs": 2176,
+      "source_dataset_pair_counts": {
+        "buu": 1801,
+        "vindr": 375
+      },
+      "computed_mean_abs_difference": 0.31371783088235294,
+      "saved_mean_disparity": 0.31371783088235294,
+      "absolute_error": 0.0,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 2912,
+        "source_dataset_pair_counts": {
+          "buu": 2405,
+          "vindr": 507
+        },
+        "mean_abs_difference": 0.3291380494505495,
+        "absolute_error_against_saved": 0.015420218568196531,
+        "denominator_matches_saved": false
+      }
+    },
+    "glm-4.6v": {
+      "n_pairs": 3988,
+      "source_dataset_pair_counts": {
+        "buu": 3267,
+        "vindr": 721
+      },
+      "computed_mean_abs_difference": 0.1741223671013039,
+      "saved_mean_disparity": 0.1741223671013039,
+      "absolute_error": 0.0,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3992,
+        "source_dataset_pair_counts": {
+          "buu": 3271,
+          "vindr": 721
+        },
+        "mean_abs_difference": 0.17107965931863728,
+        "absolute_error_against_saved": 0.0030427077826666316,
+        "denominator_matches_saved": false
+      }
+    },
+    "gpt-5.4": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.010511505752876439,
+      "saved_mean_disparity": 0.010511505752876439,
+      "absolute_error": 0.0,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.011358357750303725,
+        "absolute_error_against_saved": 0.0008468519974272858,
+        "denominator_matches_saved": true
+      }
+    },
+    "kimi-k2.5": {
+      "n_pairs": 3994,
+      "source_dataset_pair_counts": {
+        "buu": 3272,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.08928183942580536,
+      "saved_mean_disparity": 0.08928183942580538,
+      "absolute_error": 1.3877787807814457e-17,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.08526971819242955,
+        "absolute_error_against_saved": 0.004012121233375826,
+        "denominator_matches_saved": false
+      }
+    },
+    "llama-4-scout": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.44847423711855927,
+      "saved_mean_disparity": 0.44847423711855927,
+      "absolute_error": 0.0,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.46070952142738036,
+        "absolute_error_against_saved": 0.012235284308821093,
+        "denominator_matches_saved": true
+      }
+    },
+    "qwen2.5-vl": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.32670501917625483,
+      "saved_mean_disparity": 0.3267050191762548,
+      "absolute_error": 5.551115123125783e-17,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.3287060196765049,
+        "absolute_error_against_saved": 0.0020010005002501496,
+        "denominator_matches_saved": true
+      }
+    },
+    "radfm": {
+      "n_pairs": 3998,
+      "source_dataset_pair_counts": {
+        "buu": 3276,
+        "vindr": 722
+      },
+      "computed_mean_abs_difference": 0.41862597965649495,
+      "saved_mean_disparity": 0.41862597965649495,
+      "absolute_error": 0.0,
+      "denominator_matches": true,
+      "recorded_base_pairing": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.41862597965649495,
+        "absolute_error_against_saved": 0.0,
+        "denominator_matches_saved": true
+      }
+    }
+  },
+  "model_count": 9,
+  "all_denominators_match": true,
+  "max_absolute_error": 5.551115123125783e-17,
+  "verified": true,
+  "limitations": [
+    "Arithmetic agreement is not authentication of the exact dirty April runtime source.",
+    "Recorded-base pairing is a faithful code-path reconstruction using the same frozen inputs, not a model rerun or a replacement result.",
+    "The population includes BUU and VinDr; it is not an independently isolated VinDr-only estimate.",
+    "This lexical fraction is neither a conventional false-positive rate nor a clinically adjudicated hallucination rate."
+  ]
+}

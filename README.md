@@ -52,6 +52,12 @@ updated manuscript. It was added separately from the historical archive. Run
 accounting/arithmetic. The underlying July audit inputs are not all redistributed;
 this command does not reproduce those audits.
 
+The [historical provenance index](provenance/README.md) now connects the
+9,024-source eligible corpus, reconstructed configured splits, retained training
+logs, public checkpoint, recovered production masks and original scoring records.
+It distinguishes publicly inspectable evidence from access-controlled files and
+identifies the exact remaining historical gaps. The primary results are unchanged.
+
 All 18 primary point estimates and all 36 displayed interval bounds in that
 summary match the final paper. Its SHA-256 is
 e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5.
@@ -110,9 +116,11 @@ them into clinical text.
   for file-local reviewer labels, stale aggregate fields, and the exclusion list.
 - Findings-first Condition B failed for GPT-5.4 and GLM-4.6V, the two
   gate-eligible models. This does not localize a perceptual mechanism.
-- Historical inference and image generation cannot be recreated exactly from
-  this release: provider snapshots, training membership, source data, and masks
-  are not all available in the public repository.
+- The historical eligible corpus and configured split IDs are reconstructed;
+  complete original training-image bytes and exact optimizer sample use remain
+  unverified. Recovered production source PNGs and masks are access-controlled.
+  Missing provider snapshots, generator runtime code/weight hash binding and the exact dirty scoring source still prevent
+  exact end-to-end historical regeneration.
 
 ## Optional generator inspection
 
@@ -121,6 +129,15 @@ Diffusers pipeline with a final pixel-space mask blend. Production used per-step
 latent mask blending and CLIP-guided latent drift. The adapter does not reproduce
 the released images or production QC. Use the fixed images for benchmark scoring.
 QC cannot pass without all three measurements, including LPIPS.
+
+The [pinned public generator](https://huggingface.co/ahmedtaha100/spinefairbench-generator/tree/77335a8c3fdc388020f5582fb04df741b5fe7735)
+contains the retained Stage-1 checkpoint and its U-Net LoRA export. Its checkpoint
+hash matches the recovered `epoch_2.pt` snapshot; later Stage-2 updates recorded
+in the training log are not present in that selected checkpoint. See the
+[historical asset manifest](provenance/historical_asset_manifest.json) for identities
+and the distinct production-mask access route. Generation calls record checkpoint
+paths and settings without runtime code/weight hashes, so the archival checkpoint
+identity does not authenticate its loading during those calls.
 
 ## Development
 
@@ -134,6 +151,14 @@ and duplicated records, checksum identity, source/image membership, coverage
 semantics, and missing-LPIPS QC. They use synthetic fixtures and make no model
 calls. Optional mitigation analysis requires requirements-analysis.txt;
 generator dependencies are in requirements-generator.txt.
+
+Provenance tests also reject changed historical source/input bytes, duplicate or
+inconsistent corpus IDs, wrong configured split membership and source-scope drift.
+The retained exploratory scoring audit is available with
+`python scripts/verify_hallucination_provenance.py --artifacts artifacts`;
+its explicit-pair reconstruction matches all nine frozen means and denominators.
+The recorded base scorer differs, so its missing dirty runtime patch remains
+an identified provenance gap.
 
 The metrics/ and evaluation/ modules retain the original endpoint, prompt, and
 Stage-1 parser definitions for inspection. The optional analysis/mitigation.py

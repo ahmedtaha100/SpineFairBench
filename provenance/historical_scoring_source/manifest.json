@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "scope": "Recorded base source for inspection; the historical run was dirty and these files are not authenticated as the exact executed scoring implementation.",
+  "archival_base_commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+  "public_commit_resolution": "Historical identifier recovered from local git objects; exact source bytes are supplied here because a public commit URL does not resolve.",
+  "files": [
+    {
+      "path": "historical_scoring_source/spinefairbench/analyze.py",
+      "historical_path": "spinefairbench/analyze.py",
+      "sha256": "5fc2eeb362ada8a4720db8db467ea65b3202f4a5c4e34289cdd66e3f5a0d3f1f"
+    },
+    {
+      "path": "historical_scoring_source/spinefairbench/metrics/hallucination.py",
+      "historical_path": "spinefairbench/metrics/hallucination.py",
+      "sha256": "fe82ca6cbad226bbb47129b3a958ae86dc2bf7e08ae7d0e73d0992a4f9fc3840"
+    },
+    {
+      "path": "historical_scoring_source/spinefairbench/metrics/diagnostic_label.py",
+      "historical_path": "spinefairbench/metrics/diagnostic_label.py",
+      "sha256": "79650c751cb346c688d0741df7f872b6cafb9076d761f04e6ffa4961702240ea"
+    },
+    {
+      "path": "historical_scoring_source/spinefairbench/metrics/refusal_detector.py",
+      "historical_path": "spinefairbench/metrics/refusal_detector.py",
+      "sha256": "45830d930cbbdbf4f35582aa94e688b7590c302a4072e67f8b0cfc33be9915a3"
+    },
+    {
+      "path": "historical_scoring_source/spinefairbench/data/annotations.py",
+      "historical_path": "spinefairbench/data/annotations.py",
+      "sha256": "2bed2312045293de07b8196454d2e957e291bce190f759122ad7881be6a9929c"
+    }
+  ],
+  "public_file_path_base": "provenance/ (repository-relative)"
+}

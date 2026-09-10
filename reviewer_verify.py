@@ -537,9 +537,16 @@ def command_checksums(args: argparse.Namespace) -> None:
 def command_release_identity(args: argparse.Namespace) -> None:
     root = _artifact_root(args)
     release = _load_json(CODE_ROOT / "release_manifest.json")
-    if release.get("schema_version") != "1.0" or not release.get("artifact_anchors"):
+    variant = getattr(args, "archive_variant", "anonymous")
+    if variant == "anonymous":
+        identity = release
+    elif variant == "personal":
+        identity = release.get("archive_variants", {}).get("personal", {})
+    else:
+        raise SystemExit(f"Unsupported archive variant: {variant}")
+    if release.get("schema_version") != "1.0" or not identity.get("artifact_anchors"):
         raise SystemExit("Unsupported or empty release identity manifest")
-    for name, expected in release["artifact_anchors"].items():
+    for name, expected in identity["artifact_anchors"].items():
         path = _contained_path(root, name)
         if not path.is_file():
             raise SystemExit(f"Release identity file missing: {name}")
@@ -552,8 +559,9 @@ def command_release_identity(args: argparse.Namespace) -> None:
     for key, value in frozen.items():
         if public.get(key) != value:
             raise SystemExit(f"Frozen prompt differs from public code: {key}")
-    print(f"Pinned retained-release identity: OK ({len(release['artifact_anchors'])} anchors)")
-    print("Archive revision:", release["artifact_archive"]["revision"])
+    print(f"Pinned retained-release identity: OK ({len(identity['artifact_anchors'])} anchors)")
+    print("Archive variant:", variant)
+    print("Archive revision:", identity["artifact_archive"]["revision"])
     print("Frozen prompt registry entries preserved:", len(frozen))
     print("Coverage: artifact identity and prompt preservation; full file integrity requires checksums.")
 
@@ -916,6 +924,8 @@ def main() -> int:
 
     identity = sub.add_parser("release-identity", help="Verify pinned archive anchors and frozen prompts.")
     _add_artifact_arg(identity)
+    identity.add_argument("--archive-variant", choices=("anonymous", "personal"), default="anonymous",
+                          help="Select the separately pinned archive; defaults to the historical anonymous bundle.")
     identity.set_defaults(func=command_release_identity)
 
     followup = sub.add_parser("followup", help="Inspect pinned later aggregate audits and repeated-call arithmetic.")

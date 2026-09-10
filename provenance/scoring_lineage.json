@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0",
+  "record_type": "historical_scoring_lineage_recovery",
+  "created_date": "2026-09-10",
+  "scope": "Recovered original records and a current equality audit. Historical report records are preserved without recomputing or replacing frozen results.",
+  "historical_analysis": {
+    "date": "2026-04-20",
+    "recorded_git_commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+    "recorded_git_dirty": true,
+    "recorded_cli": "python -m spinefairbench analyze",
+    "run_panels": [
+      "full_pipeline_counterfactual",
+      "baseline_only"
+    ],
+    "configured_label_source_count": 2000,
+    "configured_nonempty_label_source_count": 1998
+  },
+  "original_records": [
+    {
+      "relative_path": "full_pipeline_counterfactual/run_manifest.json",
+      "bytes": 1345,
+      "sha256": "839a992d942ef2dea6729dcb6a8f5882d2a65b3cfe8fbfbe980c344f9b7eb3c7",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/full_pipeline_counterfactual/run_manifest.json"
+    },
+    {
+      "relative_path": "full_pipeline_counterfactual/benchmark_report.json",
+      "bytes": 30058,
+      "sha256": "09462acaaad8d81b166c658cb0715ab01451bb77c3b514cac24b58e1d33fbcc8",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/full_pipeline_counterfactual/benchmark_report.json"
+    },
+    {
+      "relative_path": "baseline_only/run_manifest.json",
+      "bytes": 1250,
+      "sha256": "1a20fa4ffd662c10e3c51488039b1dfc359721f826908df38d24684367aef487",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/baseline_only/run_manifest.json"
+    },
+    {
+      "relative_path": "baseline_only/benchmark_report.json",
+      "bytes": 17140,
+      "sha256": "999ff5c4154bc52b1599865e54f7b0a2d1aa53b12aa436f16207683e2c39dd84",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/baseline_only/benchmark_report.json"
+    },
+    {
+      "relative_path": "logs/full_pipeline_counterfactual.log",
+      "bytes": 9444,
+      "sha256": "bbc83fbdbad498de5477b36fda7bc185e613e97c6cf230fa6ee97422cb529a4f",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/logs/full_pipeline_counterfactual.log"
+    },
+    {
+      "relative_path": "logs/baseline_only.log",
+      "bytes": 5882,
+      "sha256": "4785c4f2fa2b6dacb0331f4c01f60aca30ab7fa50d593a1cc2215f59aeea344c",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/logs/baseline_only.log"
+    },
+    {
+      "relative_path": "configs/manuscript_full_counterfactual.desktop_analysis.yaml",
+      "bytes": 465,
+      "sha256": "417e34416f30cd524395132d33cc40d5479b5f058f8ae4aa57a0a1ae7950256a",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/configs/manuscript_full_counterfactual.desktop_analysis.yaml"
+    },
+    {
+      "relative_path": "configs/manuscript_baseline_only.desktop_analysis.yaml",
+      "bytes": 400,
+      "sha256": "08500da165ccbf3c31a265e5ae60395ab7b4c29aa773c20176b52da6fe09a50c",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/configs/manuscript_baseline_only.desktop_analysis.yaml"
+    },
+    {
+      "relative_path": "summary/export_build_summary.json",
+      "bytes": 6126,
+      "sha256": "f9407af213be9c289c3e5f5170bb8454ab8b1e1b9ff29ca0300a86bceedf9e03",
+      "preserved_path": "provenance_recovery_2026-09-10/Analysis_final/summary/export_build_summary.json"
+    }
+  ],
+  "frozen_result_identity": {
+    "file": "artifacts/Results/analysis/common_core_1000_summary.json",
+    "sha256": "e0eb42ebcb28b8e8aae16ae7749ae0adb810bf0c0c8f5ca2a8810d50993611f5"
+  },
+  "equality_checks": {
+    "models": 9,
+    "entire_hallucination_stat_objects_equal": true,
+    "matched_fields": [
+      "mean_disparity",
+      "n_pairs",
+      "bootstrap_ci.lower",
+      "bootstrap_ci.upper",
+      "wilcoxon.statistic",
+      "wilcoxon.p_value",
+      "cohens_d_z"
+    ]
+  },
+  "recorded_base_source_files": [
+    {
+      "path": "spinefairbench/analyze.py",
+      "commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+      "commit_sha256": "5fc2eeb362ada8a4720db8db467ea65b3202f4a5c4e34289cdd66e3f5a0d3f1f",
+      "legacy_current_sha256": "5fc2eeb362ada8a4720db8db467ea65b3202f4a5c4e34289cdd66e3f5a0d3f1f",
+      "current_equals_commit": true,
+      "public_snapshot_path": "historical_scoring_source/spinefairbench/analyze.py"
+    },
+    {
+      "path": "spinefairbench/metrics/hallucination.py",
+      "commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+      "commit_sha256": "fe82ca6cbad226bbb47129b3a958ae86dc2bf7e08ae7d0e73d0992a4f9fc3840",
+      "legacy_current_sha256": "fe82ca6cbad226bbb47129b3a958ae86dc2bf7e08ae7d0e73d0992a4f9fc3840",
+      "current_equals_commit": true,
+      "public_snapshot_path": "historical_scoring_source/spinefairbench/metrics/hallucination.py"
+    },
+    {
+      "path": "spinefairbench/metrics/diagnostic_label.py",
+      "commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+      "commit_sha256": "79650c751cb346c688d0741df7f872b6cafb9076d761f04e6ffa4961702240ea",
+      "legacy_current_sha256": "79650c751cb346c688d0741df7f872b6cafb9076d761f04e6ffa4961702240ea",
+      "current_equals_commit": true,
+      "public_snapshot_path": "historical_scoring_source/spinefairbench/metrics/diagnostic_label.py"
+    },
+    {
+      "path": "spinefairbench/metrics/refusal_detector.py",
+      "commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+      "commit_sha256": "45830d930cbbdbf4f35582aa94e688b7590c302a4072e67f8b0cfc33be9915a3",
+      "legacy_current_sha256": "45830d930cbbdbf4f35582aa94e688b7590c302a4072e67f8b0cfc33be9915a3",
+      "current_equals_commit": true,
+      "public_snapshot_path": "historical_scoring_source/spinefairbench/metrics/refusal_detector.py"
+    },
+    {
+      "path": "spinefairbench/data/annotations.py",
+      "commit": "889358c42a52f3406005f0939e1f20ad698d7be4",
+      "commit_sha256": "2bed2312045293de07b8196454d2e957e291bce190f759122ad7881be6a9929c",
+      "legacy_current_sha256": "2bed2312045293de07b8196454d2e957e291bce190f759122ad7881be6a9929c",
+      "current_equals_commit": true,
+      "public_snapshot_path": "historical_scoring_source/spinefairbench/data/annotations.py"
+    }
+  ],
+  "remaining_limitations": [
+    "The runtime manifest says git_dirty=true; the exact April20 uncommitted source snapshot is not recovered.",
+    "The recorded base commit is recoverable from local git objects; its public URL may not resolve, so exact source bytes are separately preserved.",
+    "The historical run family and result lineage are recovered, but byte-identical base code cannot retrospectively authenticate the dirty executed source.",
+    "The stored exploratory denominator is the usable whole-core pair population, not an independently isolated VinDr-only population.",
+    "The lexical unmatched-prediction fraction and mean paired absolute difference are not clinically adjudicated hallucination rates.",
+    "The recorded base joins source reports by source_id, whereas the verified frozen arithmetic requires explicit pair_id joins; the missing dirty runtime snapshot matters for exact execution replay."
+  ],
+  "current_arithmetic_verification": {
+    "record": "saved-hallucination-arithmetic-verification.json",
+    "sha256": "1efbef36b00fb9e083b4a8f90ca10108cb20b47bff4b847ac3d392b6ff6ab14b",
+    "model_count": 9,
+    "all_denominators_match": true,
+    "max_absolute_error": 5.551115123125783e-17,
+    "recorded_base_comparison": {
+      "claude-opus-4-6": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.012104861954786916,
+        "absolute_error_against_saved": 0.00012456625137965624,
+        "denominator_matches_saved": true
+      },
+      "claude-sonnet-4-6": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.03292211581981467,
+        "absolute_error_against_saved": 0.001997725053002695,
+        "denominator_matches_saved": true
+      },
+      "gemma-4": {
+        "n_pairs": 2912,
+        "source_dataset_pair_counts": {
+          "buu": 2405,
+          "vindr": 507
+        },
+        "mean_abs_difference": 0.3291380494505495,
+        "absolute_error_against_saved": 0.015420218568196531,
+        "denominator_matches_saved": false
+      },
+      "glm-4.6v": {
+        "n_pairs": 3992,
+        "source_dataset_pair_counts": {
+          "buu": 3271,
+          "vindr": 721
+        },
+        "mean_abs_difference": 0.17107965931863728,
+        "absolute_error_against_saved": 0.0030427077826666316,
+        "denominator_matches_saved": false
+      },
+      "gpt-5.4": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.011358357750303725,
+        "absolute_error_against_saved": 0.0008468519974272858,
+        "denominator_matches_saved": true
+      },
+      "kimi-k2.5": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.08526971819242955,
+        "absolute_error_against_saved": 0.004012121233375826,
+        "denominator_matches_saved": false
+      },
+      "llama-4-scout": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.46070952142738036,
+        "absolute_error_against_saved": 0.012235284308821093,
+        "denominator_matches_saved": true
+      },
+      "qwen2.5-vl": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.3287060196765049,
+        "absolute_error_against_saved": 0.0020010005002501496,
+        "denominator_matches_saved": true
+      },
+      "radfm": {
+        "n_pairs": 3998,
+        "source_dataset_pair_counts": {
+          "buu": 3276,
+          "vindr": 722
+        },
+        "mean_abs_difference": 0.41862597965649495,
+        "absolute_error_against_saved": 0.0,
+        "denominator_matches_saved": true
+      }
+    },
+    "public_receipt": "scoring_arithmetic_verification.json"
+  },
+  "preserved_original_repository": {
+    "repository": "ahmedtaha100/SpineFairBench-freeze",
+    "revision": "c2ab560f157f242ac627a73f0a537298b004bf8f",
+    "access": "access-controlled"
+  }
+}
