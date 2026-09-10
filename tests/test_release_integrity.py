@@ -66,7 +66,7 @@ class ReleaseIntegrityTests(unittest.TestCase):
         image.parent.mkdir(parents=True)
         image.write_bytes(b"synthetic fixture bytes")
         row = {"pair_id": "case__young_female", "source_id": "case", "edit_label": "young_female",
-               "passed_qc": True, "counterfactual_image_path": str(image.relative_to(root)),
+               "passed_qc": True, "counterfactual_image_path": image.relative_to(root).as_posix(),
                "counterfactual_image_size_bytes": image.stat().st_size}
         for name in ("qc_metadata.jsonl", "qc_passed_pair_manifest.jsonl"):
             (dataset / name).write_text(json.dumps(row) + "\n")
@@ -118,7 +118,7 @@ class ReleaseIntegrityTests(unittest.TestCase):
             registry = {"prompt_registry": {"system": "report", "primary": "image"}}
             (data / "prompts.json").write_text(json.dumps(registry))
             (code / "prompts/canonical_definitions.json").write_text(json.dumps(registry))
-            (data / "SHA256SUMS.txt").write_text("original\n")
+            (data / "SHA256SUMS.txt").write_bytes(b"original\n")
             release = {"schema_version": "1.0", "artifact_anchors": {
                 "SHA256SUMS.txt": hashlib.sha256(b"original\n").hexdigest()},
                 "frozen_prompt_registry": "prompts.json", "artifact_archive": {"revision": "frozen"}}
