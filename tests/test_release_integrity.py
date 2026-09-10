@@ -140,6 +140,62 @@ class ReleaseIntegrityTests(unittest.TestCase):
         self.assertFalse(output["coverage"]["comparable_to_panel_scope"])
         self.assertEqual(output["primary_endpoints"]["diagnostic_label_consistency"]["point_estimate"], 1.0)
 
+    def test_scorer_rejects_corrupt_qc_manifest_before_computing_coverage(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            dataset, row = self._dataset(root)
+            manifest = dataset / "qc_passed_pair_manifest.jsonl"
+            for rows, message in [
+                ([row, row], "Duplicate pair_id"),
+                ([dict(row, pair_id="")], "Invalid source/edit/pair identity"),
+                ([dict(row, source_id="different")], "Invalid source/edit/pair identity"),
+                ([dict(row, edit_label=[])], "Invalid source/edit/pair identity"),
+                ([dict(row, passed_qc=False)], "Non-passing row"),
+            ]:
+                with self.subTest(message=message, rows=rows):
+                    manifest.write_text("".join(json.dumps(item) + "\n" for item in rows))
+                    with self.assertRaisesRegex(scoring.ScoringError, message):
+                        scoring.load_benchmark_pairs(root, "qc-passed")
+
+    def test_scorer_rejects_corrupt_scope_manifests(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            _, row = self._dataset(root)
+            core = root / "artifacts/freeze_runs/2026-04-09/evaluation_source_subset_core1000.json"
+            core.parent.mkdir(parents=True)
+            for payload, message in [
+                ({"source_ids": ["case", "case"], "actual_n": 2}, "Duplicate source_id"),
+                ({"source_ids": [None], "actual_n": 1}, "Invalid source_id"),
+                ({"source_ids": ["case"], "actual_n": 2}, "actual_n does not match"),
+                ({"source_ids": ["absent"], "actual_n": 1}, "source IDs absent from QC"),
+            ]:
+                with self.subTest(payload=payload):
+                    core.write_text(json.dumps(payload))
+                    with self.assertRaisesRegex(scoring.ScoringError, message):
+                        scoring.load_benchmark_pairs(root, "common-core-1000")
+            core.write_text(json.dumps({"source_ids": ["case"], "actual_n": 1}))
+            self.assertEqual(set(scoring.load_benchmark_pairs(root, "common-core-1000")), {row["pair_id"]})
+            intersection = root / "artifacts/Results/final_inputs/all_model_intersection_2166_manifest.json"
+            intersection.parent.mkdir(parents=True)
+            for records, count, message in [
+                ([row, row], 2, "Duplicate pair_id"),
+                ([dict(row, source_id="different")], 1, "Invalid source/edit/pair identity"),
+                ([None], 1, "must be an object"),
+                ([row], 2, "pair_count does not match"),
+            ]:
+                with self.subTest(records=records, count=count):
+                    intersection.write_text(json.dumps({"records": records, "pair_count": count}))
+                    with self.assertRaisesRegex(scoring.ScoringError, message):
+                        scoring.load_benchmark_pairs(root, "all-model-intersection-2166")
+            intersection.write_text(json.dumps({"records": [row], "pair_count": 1}))
+            self.assertEqual(set(scoring.load_benchmark_pairs(root, "all-model-intersection-2166")), {row["pair_id"]})
+            outside_core = dict(row, source_id="other", pair_id="other__young_female")
+            (root / "dataset/qc_passed_pair_manifest.jsonl").write_text(
+                "".join(json.dumps(item) + "\n" for item in (row, outside_core)))
+            intersection.write_text(json.dumps({"records": [outside_core], "pair_count": 1}))
+            with self.assertRaisesRegex(scoring.ScoringError, "outside the common core"):
+                scoring.load_benchmark_pairs(root, "all-model-intersection-2166")
+
     def test_followup_rejects_wrong_aggregate_arithmetic(self):
         source = verify.CODE_ROOT / "supplement/retained_followup_audit_summary.json"
         summary = json.loads(source.read_text())

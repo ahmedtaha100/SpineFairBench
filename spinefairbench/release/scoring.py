@@ -70,8 +70,23 @@ def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _source_id_from_pair_id(pair_id: str) -> str:
-    return pair_id.split("__", 1)[0] if "__" in pair_id else pair_id
+def _manifest_pair_identity(row: Any, label: str) -> tuple[str, str, str]:
+    if not isinstance(row, dict):
+        raise ScoringError(f"{label} must be an object")
+    pair_id, source_id, edit_label = (row.get(key) for key in ("pair_id", "source_id", "edit_label"))
+    if (not isinstance(source_id, str) or not source_id.strip()
+            or source_id != source_id.strip()
+            or not isinstance(edit_label, str)
+            or edit_label not in {"young_female", "young_male", "elderly_female", "elderly_male"}
+            or pair_id != f"{source_id}__{edit_label}"):
+        raise ScoringError(f"Invalid source/edit/pair identity in {label}")
+    return pair_id, source_id, edit_label
+
+
+def _check_manifest_count(payload: dict[str, Any], field: str, actual: int, label: str) -> None:
+    expected = payload.get(field)
+    if type(expected) is not int or expected != actual:
+        raise ScoringError(f"{field} does not match {actual} unique records in {label}")
 
 
 def _load_qc_pair_index(artifacts_root: Path) -> dict[str, BenchmarkPair]:
@@ -79,17 +94,16 @@ def _load_qc_pair_index(artifacts_root: Path) -> dict[str, BenchmarkPair]:
     if not manifest.exists():
         raise ScoringError(f"Missing QC-passed pair manifest: {manifest}")
     out: dict[str, BenchmarkPair] = {}
-    for row in _load_jsonl(manifest):
-        pair_id = row.get("pair_id")
-        source_id = row.get("source_id")
-        if not isinstance(pair_id, str) or not pair_id:
-            continue
-        if not isinstance(source_id, str) or not source_id:
-            source_id = _source_id_from_pair_id(pair_id)
+    for position, row in enumerate(_load_jsonl(manifest), 1):
+        pair_id, source_id, edit_label = _manifest_pair_identity(row, f"QC manifest row {position}")
+        if pair_id in out:
+            raise ScoringError(f"Duplicate pair_id in QC manifest: {pair_id}")
+        if row.get("passed_qc") is not True:
+            raise ScoringError(f"Non-passing row in QC-passed manifest: {pair_id}")
         out[pair_id] = BenchmarkPair(
             pair_id=pair_id,
             source_id=source_id,
-            edit_label=str(row.get("edit_label") or ""),
+            edit_label=edit_label,
             counterfactual_image_path=(
                 str(row.get("counterfactual_image_path"))
                 if row.get("counterfactual_image_path")
@@ -107,7 +121,12 @@ def _load_common_core_source_ids(artifacts_root: Path) -> set[str]:
     ids = payload.get("source_ids") if isinstance(payload, dict) else None
     if not isinstance(ids, list) or not ids:
         raise ScoringError(f"Missing source_ids list in {path}")
-    return {str(value) for value in ids if str(value)}
+    if any(not isinstance(value, str) or not value.strip() or value != value.strip() for value in ids):
+        raise ScoringError(f"Invalid source_id in {path}")
+    if len(set(ids)) != len(ids):
+        raise ScoringError(f"Duplicate source_id in {path}")
+    _check_manifest_count(payload, "actual_n", len(ids), str(path))
+    return set(ids)
 
 
 def _load_intersection_pair_ids(artifacts_root: Path) -> set[str]:
@@ -116,11 +135,14 @@ def _load_intersection_pair_ids(artifacts_root: Path) -> set[str]:
     records = payload.get("records") if isinstance(payload, dict) else None
     if not isinstance(records, list) or not records:
         raise ScoringError(f"Missing records list in {path}")
-    return {
-        str(record.get("pair_id"))
-        for record in records
-        if isinstance(record, dict) and str(record.get("pair_id") or "")
-    }
+    ids: set[str] = set()
+    for position, record in enumerate(records, 1):
+        pair_id, _, _ = _manifest_pair_identity(record, f"intersection record {position}")
+        if pair_id in ids:
+            raise ScoringError(f"Duplicate pair_id in intersection manifest: {pair_id}")
+        ids.add(pair_id)
+    _check_manifest_count(payload, "pair_count", len(ids), str(path))
+    return ids
 
 
 def load_benchmark_pairs(
@@ -135,6 +157,10 @@ def load_benchmark_pairs(
         return qc_index
     if scope == "common-core-1000":
         source_ids = _load_common_core_source_ids(artifacts_root)
+        missing_sources = sorted(source_ids - {pair.source_id for pair in qc_index.values()})
+        if missing_sources:
+            raise ScoringError("Common core contains source IDs absent from QC manifest: "
+                               + ", ".join(missing_sources[:5]))
         return {
             pair_id: pair
             for pair_id, pair in qc_index.items()
@@ -148,6 +174,12 @@ def load_benchmark_pairs(
                 "All-model intersection contains pair IDs absent from QC manifest: "
                 + ", ".join(missing[:5])
             )
+        core_source_ids = _load_common_core_source_ids(artifacts_root)
+        outside_core = sorted(pair_id for pair_id in pair_ids
+                              if qc_index[pair_id].source_id not in core_source_ids)
+        if outside_core:
+            raise ScoringError("All-model intersection contains pair IDs outside the common core: "
+                               + ", ".join(outside_core[:5]))
         return {pair_id: qc_index[pair_id] for pair_id in sorted(pair_ids)}
     if scope == "toy":
         if not submitted_pair_ids:
